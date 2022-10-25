@@ -10,33 +10,6 @@
 #include "_threadsCore.h"
 #include "_kernelCore.h"
 
-int main( void ) 
-{
-	//Always call this function at the start. It sets up various peripherals, the clock etc. If you don't call this
-	//you may see some weird behaviour
-	uint32_t* MSPPtr;//declaration of main stack pointer
-	uint32_t* PSPPtr;//declaration of process stack pointer
-	uint32_t offset = 512; //declaration of variable for offset, val is 512 per lab manual
-	
-	
-	SystemInit();
-	
-	printf("\n hello world"); //debug statement, earlier code segment
-	
-	//below finds and sets PSP value and moves into thread state
-	MSPPtr = getMSPInitialLocation(); // store MSP pointer in MSPPtr var
-	//PSPPtr = getNewThreadStack(offset); //create PSPPtr offset by prev val from MSPPtr
-	//setThreadingWithPSP(PSPPtr); //sets PSPPtr as the PSP pointer (in register), sets to Thread mode
-	
-	
-	//priority and scheduling
-	kernelInit(); //init memory structures and priority of interrupts necessary to run kernel
-								// currently only controlling priority of PendSV
-	osSched(); // called by kernel to schedule which threads to run
-	
-	while (1);
-}
-
 void threadOne (void *args){
 	while(1)
 	{
@@ -61,6 +34,57 @@ void osIdleTask(void* args)
 		osSched();
 	}
 }
+
+int main( void ) 
+{
+	/*
+	//Always call this function at the start. It sets up various peripherals, the clock etc. If you don't call this
+	//you may see some weird behaviour
+	uint32_t* MSPPtr;//declaration of main stack pointer
+	uint32_t* PSPPtr;//declaration of process stack pointer
+	uint32_t offset = 512; //declaration of variable for offset, val is 512 per lab manual
+	
+	
+	SystemInit();
+	
+	printf("\n hello world"); //debug statement, earlier code segment
+	
+	//below finds and sets PSP value and moves into thread state
+	MSPPtr = getMSPInitialLocation(); // store MSP pointer in MSPPtr var
+	//PSPPtr = getNewThreadStack(offset); //create PSPPtr offset by prev val from MSPPtr
+	//setThreadingWithPSP(PSPPtr); //sets PSPPtr as the PSP pointer (in register), sets to Thread mode
+	
+	
+	//priority and scheduling
+	kernelInit(); //init memory structures and priority of interrupts necessary to run kernel
+								// currently only controlling priority of PendSV
+	osSched(); // called by kernel to schedule which threads to run
+	*/
+	
+	//newStart
+	uint32_t* MSPPtr;
+	uint32_t offset=512;
+	SystemInit(); //should go first??
+	
+	printf("\n hello world"); 
+	MSPPtr = getMSPInitialLocation();
+	printf("\n MSP PTR: ");
+	printf ("%d", (int)&MSPPtr);
+	
+	kernelInit();
+	
+	osCreateThread(osIdleTask);
+	osCreateThread(threadOne);
+	osCreateThread(threadTwo);
+	
+	//osKernelStart();
+	
+	
+	
+	while (1);
+}
+
+
 
 
 /*

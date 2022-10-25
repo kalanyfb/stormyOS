@@ -6,6 +6,6 @@
 
 typedef struct thread{
 	//function pointer
-	void (*fun_ptr)(void *args);
-	uint32_t *TSP; //thread stack pointer
+	void (*fun_ptr)(void *args); //takes in a single void pointer
+	uint32_t *TSP; //thread stack pointer address of stack
 }thread; 

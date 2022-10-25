@@ -5,7 +5,7 @@
 #include "osDefs.h"
 
 extern thread threadList [8];
-int arrayCount=0;
+int threadCount=0;
 
 uint32_t* getMSPInitialLocation(void){
 	
@@ -44,22 +44,37 @@ void setThreadingWithPSP(uint32_t* threadStack){
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void osCreatethread(void (*userFunction)){
+void osCreateThread(void (*userFunction)){
 	//pass in function pointer 
 	//create new thread stack 
-	uint32_t* threadPointer;
-	threadPointer = getNewThreadStack ((uint32_t)512);
+	uint32_t* threadStackPointer;
+	threadStackPointer = getNewThreadStack ((uint32_t)512);
 	//pass in values to struct
-	thread newThread = (thread){.fun_ptr = userFunction, .TSP = threadPointer};
-	//pass in struct to array - parse array to look for first open spot (???)
-	//for(int count = 0; count < 8; count++){
-	//	if(threadList[count] == NULL)
-	//		threadList[count] = newThread;
-	threadList[arrayCount] = newThread;
-	arrayCount++;
+	thread newThread = (thread){.fun_ptr = userFunction, .TSP = threadStackPointer};
+	if (threadCount<8)
+	{
+		threadList[threadCount] = newThread;
+		threadCount++; // if array count is lesss than 8 otherwise error???
+	}
+	//else error
+	
+	//setting thread stack's registers
+	*--threadStackPointer = 1<<24;
+	*--threadStackPointer = (uint32_t)userFunction;
+	
+	uint32_t patternedValue=0xAA;
+	for (int i = 0; i<6; i++){
+		*--threadStackPointer = patternedValue;
+		patternedValue = patternedValue + 0x01;
+	}
+	
+	patternedValue=0xBA;
+	for (int i = 0; i<7; i++){
+		*--threadStackPointer = patternedValue;
+		patternedValue = patternedValue + 0x01;
+	}
+	
 }
-
-void osKernelStart()/////
 
 
 
