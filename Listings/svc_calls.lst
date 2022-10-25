@@ -1,0 +1,56 @@
+
+
+
+ARM Macro Assembler    Page 1 
+
+
+    1 00000000                 AREA             handle_pend,CODE,READONLY ;defi
+                                                            nes new "area"- way
+                                                             for linker to know
+                                                             what exists in thi
+                                                            s file (code that s
+                                                            houldn't be overwri
+                                                            tten)
+    2 00000000                 GLOBAL           PendSV_Handler 
+                                                            ;declares function
+    3 00000000                 PRESERVE8                    ;tells linker that 
+                                                            stack will always l
+                                                            ie on 8 byte bounda
+                                                            ry
+    4 00000000         PendSV_Handler
+    5 00000000 F06F 0E02       MOV              LR,#0xFFFFFFFD ;loads LR with c
+                                                            onstant val
+    6 00000004 4770            BX               LR          ;returns from funct
+                                                            ion
+    7 00000006                 END
+Command Line: --debug --xref --diag_suppress=9931 --cpu=Cortex-M3 --apcs=interw
+ork --depend=.\objects\svc_calls.d -o.\objects\svc_calls.o -I.\RTE\Device\LPC17
+68 -I.\RTE\_Target_1 -IC:\Software\Keil_v5\ARM\PACK\ARM\CMSIS\5.8.0\CMSIS\Core\
+Include -IC:\Software\Keil_v5\ARM\PACK\Keil\LPC1700_DFP\2.7.0\Device\Include --
+predefine="__EVAL SETA 1" --predefine="__MICROLIB SETA 1" --predefine="__UVISIO
+N_VERSION SETA 531" --predefine="_RTE_ SETA 1" --predefine="LPC175x_6x SETA 1" 
+--predefine="_RTE_ SETA 1" --list=.\listings\svc_calls.lst src\svc_calls.s
+
+
+
+ARM Macro Assembler    Page 1 Alphabetic symbol ordering
+Relocatable symbols
+
+PendSV_Handler 00000000
+
+Symbol: PendSV_Handler
+   Definitions
+      At line 4 in file src\svc_calls.s
+   Uses
+      At line 2 in file src\svc_calls.s
+Comment: PendSV_Handler used once
+handle_pend 00000000
+
+Symbol: handle_pend
+   Definitions
+      At line 1 in file src\svc_calls.s
+   Uses
+      None
+Comment: handle_pend unused
+2 symbols
+337 symbols in table
