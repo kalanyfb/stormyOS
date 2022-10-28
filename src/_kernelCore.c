@@ -5,6 +5,8 @@
 
 thread threadList [8];
 thread sleepList [8];
+//thread waitList[8];
+
 extern int threadCount; //number of threads created
 int sleepCount = 0;
 int osCurrentTask = 0;
@@ -26,8 +28,15 @@ void osYield(void){
 	if(osCurrentTask >= 0)
 	{
 		threadList[osCurrentTask].TSP = (uint32_t*)(__get_PSP() - 16*4); //pushes 16 uint32_ts to move the TSP down below garbage registers
+		threadList[osCurrentTask].state = WAITING;
 	}
+	
+	
 	osCurrentTask = (osCurrentTask+1)%(threadCount);
+	
+	while(threadList[osCurrentTask].state==SLEEP){
+		osCurrentTask = (osCurrentTask+1)%(threadCount);
+	}
 	
 	ICSR |= 1<<28;	//changes pendSV state to pending
 	__asm("isb");	//tells compiler to run the "isb" instruction using assembly
@@ -40,6 +49,7 @@ bool osKernelStart(){
 		//setThreadingWithPSP(threadList[0].TSP);
 		__set_CONTROL(1<<1);
 		__set_PSP((uint32_t)threadList[0].TSP);
+		threadList[0].state=ACTIVELY_RUNNING;
 		
 		osYield();
 	}
@@ -69,28 +79,21 @@ void SysTick_Handler(void){
 		if(sleepList[i].state == SLEEP 
 			&& (msTicks-sleepList[i].napStart)%sleepList[i].napLength==0)
 		{
-			sleepList[i].state = WAITING;
+			sleepList[i].state = WAITING; // and then remove form sleepList?
+			sleepList[i].napStart=0;
 		}
 	}
-	if(threadList[osCurrentTask].state ==  SLEEP)
-	{
-		//record position, consistently check for if time is up for each of sleepuign threads in array, then change state to wait
-	}
-	//if(msTicks%1000==0) //modulus amount of time for each thread
-	//{
-		//osYield();	
-	//}
 	
-	//if thread currently being run.state=sleep and .time is up
 	
 }
 
 void osSleep(int time){
 	threadList[osCurrentTask].state = SLEEP;
 	sleepList[sleepCount]=threadList[osCurrentTask]; //add to sleep array
-	sleepList[sleepCount].napLength = time;
-	sleepList[sleepCount].napStart = msTicks;
+	sleepList[sleepCount].napLength = time; //set naptime var
+	sleepList[sleepCount].napStart = msTicks; //set napt start var
 	
+	osYield();
 }
 
 

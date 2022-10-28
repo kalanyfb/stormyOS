@@ -13,6 +13,7 @@ void kernelInit(void);		//initializes memory structures and interrupts necessary
 void osYield(void);		//called by the kernel to schedule which threads to run
 bool osKernelStart(void);
 void SysTick_Handler(void);
+void osSleep(int time);
 
 #define SHPR3 *(uint32_t*)0xE000ED20	//this memory location is pointer to a uint32_t
 #define ICSR *(uint32_t*)0xE000ED04	//ICSR is at this memory location

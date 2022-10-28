@@ -17,7 +17,7 @@ void threadOne (void *args){
 	while(1)
 	{
 		printf("\n thread 1 ");
-		//osYield();
+		osYield();
 	}
 }
 
@@ -25,7 +25,7 @@ void threadTwo (void *args){
 	while(1)
 	{
 		printf("\n thread 2 ");
-		//osSleep(1000);
+		osSleep(1000);
 		//osYield();
 	}
 }
