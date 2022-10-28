@@ -4,9 +4,13 @@
 #include "osDefs.h"
 
 thread threadList [8];
+thread sleepList [8];
 extern int threadCount; //number of threads created
+int sleepCount = 0;
 int osCurrentTask = 0;
 uint32_t mspAddr;
+volatile uint32_t msTicks = 0;
+
 
 //this function initializes memory structs and interrupts required to run kernel
 void kernelInit(void){
@@ -17,7 +21,7 @@ void kernelInit(void){
 }
 
 //this function is called by the kernel; it schedules which threads to run
-void osSched(void){
+void osYield(void){
 	
 	if(osCurrentTask >= 0)
 	{
@@ -32,11 +36,12 @@ void osSched(void){
 bool osKernelStart(){
 	
 	if(threadCount>0){ //if at least one thread exists
-		osCurrentTask=-1; //set osCurrent task to -1 (to set up for osSched method)
+		osCurrentTask=-1; //set osCurrent task to -1 (to set up for osYield method)
 		//setThreadingWithPSP(threadList[0].TSP);
 		__set_CONTROL(1<<1);
 		__set_PSP((uint32_t)threadList[0].TSP);
-		osSched();
+		
+		osYield();
 	}
 	return 0;
 }
@@ -54,4 +59,38 @@ int task_switch(void){
 	__set_PSP((uint32_t)threadList[osCurrentTask].TSP);//set new PSP with TSP
 	return 1;
 }
+
+void SysTick_Handler(void){
+	msTicks++;
+	int i;
+	
+	for (i=0; i<(sleepCount-1); i++)
+	{
+		if(sleepList[i].state == SLEEP 
+			&& (msTicks-sleepList[i].napStart)%sleepList[i].napLength==0)
+		{
+			sleepList[i].state = WAITING;
+		}
+	}
+	if(threadList[osCurrentTask].state ==  SLEEP)
+	{
+		//record position, consistently check for if time is up for each of sleepuign threads in array, then change state to wait
+	}
+	//if(msTicks%1000==0) //modulus amount of time for each thread
+	//{
+		//osYield();	
+	//}
+	
+	//if thread currently being run.state=sleep and .time is up
+	
+}
+
+void osSleep(int time){
+	threadList[osCurrentTask].state = SLEEP;
+	sleepList[sleepCount]=threadList[osCurrentTask]; //add to sleep array
+	sleepList[sleepCount].napLength = time;
+	sleepList[sleepCount].napStart = msTicks;
+	
+}
+
 

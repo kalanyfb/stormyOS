@@ -17,7 +17,7 @@ void threadOne (void *args){
 	while(1)
 	{
 		printf("\n thread 1 ");
-		osSched();
+		//osYield();
 	}
 }
 
@@ -25,7 +25,8 @@ void threadTwo (void *args){
 	while(1)
 	{
 		printf("\n thread 2 ");
-		osSched();
+		//osSleep(1000);
+		//osYield();
 	}
 }
 
@@ -33,7 +34,7 @@ void osIdleTask(void* args){
 	while(1)
 	{
 		printf("\n default thread");
-		osSched();
+		//osYield();
 	}
 }
 
@@ -60,7 +61,7 @@ int main( void )
 	//priority and scheduling
 	kernelInit(); //init memory structures and priority of interrupts necessary to run kernel
 								// currently only controlling priority of PendSV
-	osSched(); // called by kernel to schedule which threads to run
+	osYield(); // called by kernel to schedule which threads to run
 	*/
 	
 	//newStart
@@ -73,6 +74,9 @@ int main( void )
 	printf ("%x\n", (int)&MSPPtr);
 	
 	kernelInit();
+	
+	SysTick_Config(SystemCoreClock/1000);
+	
 	
 	//osCreateThread(osIdleTask);
 	osCreateThread(threadOne);
@@ -183,7 +187,7 @@ int main( void )
 	//setThreadingwithPSP(PSPPtr);
 	
 	kernelInit();
-	osSched();
+	osYield();
 	
 	while (1);
 	
