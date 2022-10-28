@@ -11,18 +11,42 @@ ARM Macro Assembler    Page 1
                                                             s file (code that s
                                                             houldn't be overwri
                                                             tten)
-    2 00000000                 GLOBAL           PendSV_Handler 
+    2 00000000                 EXTERN           task_switch ;calls a C function
+                                                             to handle the swit
+                                                            ching
+    3 00000000                 GLOBAL           PendSV_Handler 
                                                             ;declares function
-    3 00000000                 PRESERVE8                    ;tells linker that 
+    4 00000000                 PRESERVE8                    ;tells linker that 
                                                             stack will always l
                                                             ie on 8 byte bounda
                                                             ry
-    4 00000000         PendSV_Handler
-    5 00000000 F06F 0E02       MOV              LR,#0xFFFFFFFD ;loads LR with c
+    5 00000000         PendSV_Handler
+    6 00000000         
+    7 00000000 F3EF 8009       MRS              r0, PSP     ;loads curr val of 
+                                                            PSP into r0
+    8 00000004         
+    9 00000004 E920 0FF0       STMDB            r0!,{r4-r11} ;stores the regist
+                                                            ers
+   10 00000008         
+   11 00000008 F7FF FFFE       BL               task_switch ;calls kernel to sw
+                                                            itch task
+   12 0000000C         
+   13 0000000C F3EF 8009       MRS              r0,PSP      ;new task stack
+   14 00000010 F06F 0E02       MOV              LR,#0xFFFFFFFD ;loads LR with c
                                                             onstant val
-    6 00000004 4770            BX               LR          ;returns from funct
+   15 00000014         
+   16 00000014 E8B0 0FF0       LDMIA            r0!,{r4-r11} ; opposite of STMD
+                                                            B, means LoaD Multi
+                                                            ple Increment After
+                                                             - basically undos 
+                                                            the stack pushes do
+                                                            ne prior
+   17 00000018         
+   18 00000018 F380 8809       MSR              PSP,r0      ; reload PSP
+   19 0000001C         
+   20 0000001C 4770            BX               LR          ;returns from funct
                                                             ion
-    7 00000006                 END
+   21 0000001E                 END
 Command Line: --debug --xref --diag_suppress=9931 --cpu=Cortex-M3 --apcs=interw
 ork --depend=.\objects\svc_calls.d -o.\objects\svc_calls.o -I.\RTE\Device\LPC17
 68 -I.\RTE\_Target_1 -IC:\Software\Keil_v5\ARM\PACK\ARM\CMSIS\5.8.0\CMSIS\Core\
@@ -40,9 +64,9 @@ PendSV_Handler 00000000
 
 Symbol: PendSV_Handler
    Definitions
-      At line 4 in file src\svc_calls.s
+      At line 5 in file src\svc_calls.s
    Uses
-      At line 2 in file src\svc_calls.s
+      At line 3 in file src\svc_calls.s
 Comment: PendSV_Handler used once
 handle_pend 00000000
 
@@ -53,4 +77,19 @@ Symbol: handle_pend
       None
 Comment: handle_pend unused
 2 symbols
-337 symbols in table
+
+
+
+ARM Macro Assembler    Page 1 Alphabetic symbol ordering
+External symbols
+
+task_switch 00000000
+
+Symbol: task_switch
+   Definitions
+      At line 2 in file src\svc_calls.s
+   Uses
+      At line 11 in file src\svc_calls.s
+Comment: task_switch used once
+1 symbol
+338 symbols in table

@@ -6,6 +6,8 @@
 
 extern thread threadList [8];
 int threadCount=0;
+extern uint32_t OFFSET;
+extern uint32_t MAXTHREADS;
 
 uint32_t* getMSPInitialLocation(void){
 	
@@ -16,14 +18,14 @@ uint32_t* getMSPInitialLocation(void){
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-uint32_t* getNewThreadStack(uint32_t offset){ // can i get a new stack, include error checking later(???)
+uint32_t* getNewThreadStack(uint32_t OFFSET){ // can i get a new stack, include error checking later(???)
 	
 	//should i keep the msp value as a global variable? or just the current MSP?\
 	//should decrement msp
 	
 	uint32_t* currentMSP = getMSPInitialLocation(); //gets pointer to MSP
 	uint32_t MSPAddress = (uint32_t)currentMSP; //address of MSP, casted to 32-bit integer 
-	uint32_t PSPAddress = MSPAddress - offset; //subtracts offset to address of MSP
+	uint32_t PSPAddress = MSPAddress - OFFSET; //subtracts offset to address of MSP
 	uint32_t addOffset = 0; //initializes additional offset value
 	uint32_t* newPSP; //initializes pointer that will be PSP
 	
@@ -33,6 +35,8 @@ uint32_t* getNewThreadStack(uint32_t offset){ // can i get a new stack, include 
 	PSPAddress += addOffset; //additional offset is added to PSP address to make it divisible by 8
 	newPSP = (uint32_t*)(PSPAddress); // newPSP is set with address that is (correctly) offset
 	
+	printf ("PSP address:");
+	printf ("%x\n", PSPAddress);
 	return newPSP;
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -44,36 +48,98 @@ void setThreadingWithPSP(uint32_t* threadStack){
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void osCreateThread(void (*userFunction)){
+void osCreateThread(void(*userFunction)(void *args)){
 	//pass in function pointer 
 	//create new thread stack 
-	uint32_t* threadStackPointer;
-	threadStackPointer = getNewThreadStack ((uint32_t)512);
-	//pass in values to struct
-	thread newThread = (thread){.fun_ptr = userFunction, .TSP = threadStackPointer};
-	if (threadCount<8)
+	
+	uint32_t patternedValue;
+	int i;
+	
+	if (threadCount<MAXTHREADS)
 	{
-		threadList[threadCount] = newThread;
-		threadCount++; // if array count is lesss than 8 otherwise error???
+		threadList[threadCount].fun_ptr = userFunction;
+		threadList[threadCount].TSP=getNewThreadStack(0x200 + (threadCount)*THREAD_STACK_SIZE);
+		
+		printf("%x,\n", (int)(threadList[threadCount].TSP));
+		*(--threadList[threadCount].TSP) = 1<<24;
+		printf ("%x\n", *(threadList[threadCount].TSP));
+		*(--threadList[threadCount].TSP) = (uint32_t)userFunction;
+		//printf ("%d\n", (uint32_t)userFunction);
+		//printf("%d\n", *(threadList[threadCount].TSP));
+		
+		patternedValue=0xA0;
+		for (i = 0; i<6; i++){
+			*(--threadList[threadCount].TSP) = patternedValue;
+			patternedValue = patternedValue + 0x01;
+		}
+		
+		patternedValue=0xB0;
+		for (i = 0; i<8; i++){
+			*(--threadList[threadCount].TSP) = patternedValue;
+			patternedValue = patternedValue + 0x01;
+		}
+		threadCount++;
+		printf ("%d\n", threadCount);
+		
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	/*
+	uint32_t* threadStackPointer;
+	thread newThread;
+	uint32_t patternedValue;
+	int i;
+	threadStackPointer = getNewThreadStack (OFFSET + threadCount*OFFSET);
+
+	//pass in values to struct
+	newThread.fun_ptr = userFunction;
+	printf ("%d\n", (uint32_t)userFunction);
+	printf ("%d\n", (uint32_t)newThread.fun_ptr);
+	newThread.TSP = threadStackPointer;
+	if (threadCount<MAXTHREADS){
+		threadList[threadCount] = newThread; // if array count is lesss than 8 otherwise error???
 	}
 	//else error
-	
+	//printf("\n hello");
 	//setting thread stack's registers
-	*--threadStackPointer = 1<<24;
-	*--threadStackPointer = (uint32_t)userFunction;
+	*(--threadList[threadCount].TSP) = 1<<24;
+	*(--threadList[threadCount].TSP) = (uint32_t)userFunction;
 	
-	uint32_t patternedValue=0xAA;
-	for (int i = 0; i<6; i++){
+	printf ("/n threadcount: ");
+	printf("%d\n", threadCount);
+	printf ("%d\n", (uint32_t)*(threadList[threadCount].TSP));
+	
+	*--threadStackPointer = 1<<24; //set PSR
+	*--threadStackPointer = (uint32_t)userFunction; //set PC
+	printf ("%d\n", (uint32_t)*threadStackPointer);
+	
+	patternedValue=0xA0;
+	for (i = 0; i<6; i++){
 		*--threadStackPointer = patternedValue;
 		patternedValue = patternedValue + 0x01;
 	}
 	
-	patternedValue=0xBA;
-	for (int i = 0; i<7; i++){
+	patternedValue=0xB0;
+	for (i = 0; i<7; i++){
 		*--threadStackPointer = patternedValue;
 		patternedValue = patternedValue + 0x01;
 	}
 	
+
+	threadCount++;*/
 }
 
 

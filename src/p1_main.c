@@ -10,10 +10,13 @@
 #include "_threadsCore.h"
 #include "_kernelCore.h"
 
+uint32_t OFFSET=512;
+uint32_t MAXTHREADS=8;
+
 void threadOne (void *args){
 	while(1)
 	{
-		printf("thread 1 ");
+		printf("\n thread 1 ");
 		osSched();
 	}
 }
@@ -21,16 +24,15 @@ void threadOne (void *args){
 void threadTwo (void *args){
 	while(1)
 	{
-		printf("thread 2 ");
+		printf("\n thread 2 ");
 		osSched();
 	}
 }
 
-void osIdleTask(void* args)
-{
+void osIdleTask(void* args){
 	while(1)
 	{
-		printf("default thread");
+		printf("\n default thread");
 		osSched();
 	}
 }
@@ -63,21 +65,20 @@ int main( void )
 	
 	//newStart
 	uint32_t* MSPPtr;
-	uint32_t offset=512;
 	SystemInit(); //should go first??
 	
 	printf("\n hello world"); 
 	MSPPtr = getMSPInitialLocation();
 	printf("\n MSP PTR: ");
-	printf ("%d", (int)&MSPPtr);
+	printf ("%x\n", (int)&MSPPtr);
 	
 	kernelInit();
 	
-	osCreateThread(osIdleTask);
+	//osCreateThread(osIdleTask);
 	osCreateThread(threadOne);
 	osCreateThread(threadTwo);
 	
-	//osKernelStart();
+	osKernelStart();
 	
 	
 	
