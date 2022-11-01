@@ -1,25 +1,31 @@
 #include "_kernelCore.h"
 #include "_threadsCore.h"
+//#include "p1_main.c"
 #include <LPC17xx.h>
-#include "osDefs.h"
+//#include "osDefs.h"
 
-thread threadList [8];
-thread sleepList [8];
+thread threadList [LIST_LENGTH];
+//thread sleepList [8];
 //thread waitList[8];
 
 extern int threadCount; //number of threads created
-int sleepCount = 0;
+//int sleepCount = 0;
 int osCurrentTask = 0;
 uint32_t mspAddr;
 volatile uint32_t msTicks = 0;
+int storeTask = -1;
+uint32_t timeInThread = 0;
+
 
 
 //this function initializes memory structs and interrupts required to run kernel
 void kernelInit(void){
 	uint32_t * MSP_Original = 0; //may not need
 	SHPR3 |= 0xFF << 16;	//sets priority of interrupt; bit shifts 0xFF by 16 and bitwise OR SHPR3 with that value
-	mspAddr = *MSP_Original; //may not need
+	mspAddr = *MSP_Original; //get address of original MSP
 	
+	//AAA
+	osCreateThread(osIdleTask);
 }
 
 //this function is called by the kernel; it schedules which threads to run
@@ -28,19 +34,25 @@ void osYield(void){
 	if(osCurrentTask >= 0)
 	{
 		threadList[osCurrentTask].TSP = (uint32_t*)(__get_PSP() - 16*4); //pushes 16 uint32_ts to move the TSP down below garbage registers
-		threadList[osCurrentTask].state = WAITING;
+		threadList[osCurrentTask].state = WAITING; 
 	}
 	
+	osSched();
 	
+	ICSR |= 1<<28;	//changes pendSV state to pending
+	__asm("isb");	//tells compiler to run the "isb" instruction using assembly
+}//declare global. copy and plaxe in theadscore and declare at start with extern
+
+void osSched(void){
 	osCurrentTask = (osCurrentTask+1)%(threadCount);
 	
 	while(threadList[osCurrentTask].state==SLEEP){
 		osCurrentTask = (osCurrentTask+1)%(threadCount);
 	}
 	
-	ICSR |= 1<<28;	//changes pendSV state to pending
-	__asm("isb");	//tells compiler to run the "isb" instruction using assembly
-}//declare globall. copy and plaxe in theadscore and declare at start with extern
+}
+
+
 
 bool osKernelStart(){
 	
@@ -55,14 +67,6 @@ bool osKernelStart(){
 	}
 	return 0;
 }
-	/*Start the kernel, usually by calling a kernel_start type function. This function’s purpose is to
-initialize anything that the first thread needs before it gets going (or that the kernel needs
-before the first thread runs), then switch to thread mode, switch SP to PSP, and finally start the
-27 That will be a HUGE overhead when allocating a new array...
-55
-first thread. The easiest way to do that is to call the scheduling function, but exactly how you
-start threads is a consideration for your OS*/
-
 
 
 int task_switch(void){
@@ -71,27 +75,45 @@ int task_switch(void){
 }
 
 void SysTick_Handler(void){
+	int i = 0;
 	msTicks++;
-	int i;
 	
-	for (i=0; i<(sleepCount-1); i++)
-	{
-		if(sleepList[i].state == SLEEP 
-			&& (msTicks-sleepList[i].napStart)%sleepList[i].napLength==0)
+	if (kernelStarted){
+		
+		for (i=0; i<LIST_LENGTH; i++)
 		{
-			sleepList[i].state = WAITING; // and then remove form sleepList?
-			sleepList[i].napStart=0;
+			if(threadList[i].state == SLEEP 
+				&& (msTicks-threadList[i].napStart)%threadList[i].napLength==0)
+			{
+				threadList[i].state = WAITING; // and then remove form sleepList?
+				threadList[i].napStart=0;
+			}
 		}
+	
+		//will need to determine if a change in threads has occurred 
+		//and the current time passed in each/new thread
+	
+		//can do this with a var that stores the old index and a timer???
+		if(storeTask != osCurrentTask) //means we've switched tasks
+		{
+			timeInThread = msTicks;
+			storeTask = osCurrentTask;
+		}
+	
+		if ((msTicks - timeInThread)%FORCE_SWITCH_TIME == 0)
+		{
+			osYield();
+		}
+		
+	
+	
 	}
-	
-	
 }
 
 void osSleep(int time){
 	threadList[osCurrentTask].state = SLEEP;
-	sleepList[sleepCount]=threadList[osCurrentTask]; //add to sleep array
-	sleepList[sleepCount].napLength = time; //set naptime var
-	sleepList[sleepCount].napStart = msTicks; //set napt start var
+	threadList[osCurrentTask].napLength = time; //set naptime var
+	threadList[osCurrentTask].napStart = msTicks; //set napt start var
 	
 	osYield();
 }

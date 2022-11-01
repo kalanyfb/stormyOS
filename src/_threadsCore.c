@@ -1,4 +1,5 @@
 #include "_threadsCore.h"
+#include "_kernelCore.h"
 #include <LPC17xx.h>
 #include <stdint.h>
 #include "stdio.h"
@@ -34,8 +35,8 @@ uint32_t* getNewThreadStack(uint32_t OFFSET){ // can i get a new stack, include 
 	}
 	PSPAddress += addOffset; //additional offset is added to PSP address to make it divisible by 8
 	newPSP = (uint32_t*)(PSPAddress); // newPSP is set with address that is (correctly) offset
-	
 	printf ("PSP address:");
+	
 	printf ("%x\n", PSPAddress);
 	return newPSP;
 }
@@ -58,7 +59,7 @@ void osCreateThread(void(*userFunction)(void *args)){
 	if (threadCount<MAXTHREADS)
 	{
 		threadList[threadCount].fun_ptr = userFunction;
-		threadList[threadCount].TSP=getNewThreadStack(0x200 + (threadCount)*THREAD_STACK_SIZE);
+		threadList[threadCount].TSP=getNewThreadStack(MAIN_STACK_SIZE + (threadCount)*THREAD_STACK_SIZE); //AAA
 		
 		printf("%x,\n", (int)(threadList[threadCount].TSP));
 		*(--threadList[threadCount].TSP) = 1<<24;
@@ -83,65 +84,16 @@ void osCreateThread(void(*userFunction)(void *args)){
 		
 	}
 	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	/*
-	uint32_t* threadStackPointer;
-	thread newThread;
-	uint32_t patternedValue;
-	int i;
-	threadStackPointer = getNewThreadStack (OFFSET + threadCount*OFFSET);
-
-	//pass in values to struct
-	newThread.fun_ptr = userFunction;
-	printf ("%d\n", (uint32_t)userFunction);
-	printf ("%d\n", (uint32_t)newThread.fun_ptr);
-	newThread.TSP = threadStackPointer;
-	if (threadCount<MAXTHREADS){
-		threadList[threadCount] = newThread; // if array count is lesss than 8 otherwise error???
-	}
-	//else error
-	//printf("\n hello");
-	//setting thread stack's registers
-	*(--threadList[threadCount].TSP) = 1<<24;
-	*(--threadList[threadCount].TSP) = (uint32_t)userFunction;
-	
-	printf ("/n threadcount: ");
-	printf("%d\n", threadCount);
-	printf ("%d\n", (uint32_t)*(threadList[threadCount].TSP));
-	
-	*--threadStackPointer = 1<<24; //set PSR
-	*--threadStackPointer = (uint32_t)userFunction; //set PC
-	printf ("%d\n", (uint32_t)*threadStackPointer);
-	
-	patternedValue=0xA0;
-	for (i = 0; i<6; i++){
-		*--threadStackPointer = patternedValue;
-		patternedValue = patternedValue + 0x01;
-	}
-	
-	patternedValue=0xB0;
-	for (i = 0; i<7; i++){
-		*--threadStackPointer = patternedValue;
-		patternedValue = patternedValue + 0x01;
-	}
-	
-
-	threadCount++;*/
 }
 
+//should only run if no other options
+void osIdleTask(void* args){
+	while(1)
+	{
+		printf("\n idlethread");
+		//osYield();
+	}
+}
 
 
 

@@ -4,14 +4,20 @@
 //This file is for printf and other IO functions
 #include "stdio.h"
 
+#include <stdbool.h>
+
 //this file sets up the UART
 #include "uart.h"
 
 #include "_threadsCore.h"
 #include "_kernelCore.h"
 
+#include "osDefs.h"
+
+
 uint32_t OFFSET=512;
 uint32_t MAXTHREADS=8;
+
 
 void threadOne (void *args){
 	while(1)
@@ -30,13 +36,21 @@ void threadTwo (void *args){
 	}
 }
 
-void osIdleTask(void* args){
+void threadThree (void *args){
+	while(1)
+	{
+		printf("\n thread 3 ");
+		
+	}
+}
+
+/*void osIdleTask(void* args){
 	while(1)
 	{
 		printf("\n default thread");
 		//osYield();
 	}
-}
+}*/
 
 int main( void ) 
 {
@@ -75,6 +89,7 @@ int main( void )
 	
 	kernelInit();
 	
+	
 	SysTick_Config(SystemCoreClock/1000);
 	
 	
@@ -82,7 +97,7 @@ int main( void )
 	osCreateThread(threadOne);
 	osCreateThread(threadTwo);
 	
-	osKernelStart();
+	kernelStarted = osKernelStart();
 	
 	
 	

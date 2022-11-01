@@ -4,14 +4,21 @@
 //include typedef of threads struct
 #include <stdio.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 #define THREAD_STACK_SIZE 0x200
+#define MAIN_STACK_SIZE 0x200
 
 //thread states
 #define CREATED 0
-#define ACTIVELY_RUNNING 1
+#define ACTIVELY_RUNNING 1 //one thread only
 #define WAITING 2
 #define SLEEP 3
+
+#define LIST_LENGTH 8
+#define FORCE_SWITCH_TIME 1000
+
+bool kernelStarted = 0;
 
 typedef struct thread{
 	//function pointer

@@ -419,9 +419,14 @@
               <FilePath>.\src\_kernelCore.h</FilePath>
             </File>
             <File>
+              <FileName>_threadsCore.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\src\_threadsCore.h</FilePath>
+            </File>
+            <File>
               <FileName>osDefs.h</FileName>
               <FileType>5</FileType>
-              <FilePath>.\osDefs.h</FilePath>
+              <FilePath>.\src\osDefs.h</FilePath>
             </File>
           </Files>
         </Group>
