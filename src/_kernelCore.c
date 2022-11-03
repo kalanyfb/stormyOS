@@ -13,9 +13,11 @@ extern int threadCount; //number of threads created
 int osCurrentTask = 0;
 uint32_t mspAddr;
 volatile uint32_t msTicks = 0;
-int storeTask = -1;
+int storeTask = -1; //replace with boolean
+bool taskSwitched = 0;
 uint32_t timeInThread = 0;
 extern bool kernelStarted;
+int pushValue = 16*4;
 
 extern void osCreateThread(void(*userFunction)(void *args));
 extern void osIdleTask(void* args);
@@ -27,16 +29,19 @@ void kernelInit(void){
 	mspAddr = *MSP_Original; //get address of original MSP
 	
 	//AAA
-	//osCreateThread(osIdleTask);
+	osCreateThread(osIdleTask);
 }
 
 //this function is called by the kernel; it schedules which threads to run
 void osYield(void){
-	
+	taskSwitched = 1;
+	printf ("\n taskswitched: ");
+	printf("%d\n",taskSwitched);
 	if(osCurrentTask >= 0)
 	{
-		threadList[osCurrentTask].TSP = (uint32_t*)(__get_PSP() - 16*4); //pushes 16 uint32_ts to move the TSP down below garbage registers
+		threadList[osCurrentTask].TSP = (uint32_t*)(__get_PSP() - pushValue); //pushes 16 uint32_ts to move the TSP down below garbage registers
 		threadList[osCurrentTask].state = WAITING; 
+		pushValue = 16*4;
 	}
 	
 	osCurrentTask = (osCurrentTask+1)%(threadCount);
@@ -44,26 +49,23 @@ void osYield(void){
 	while(threadList[osCurrentTask].state==SLEEP){
 		osCurrentTask = (osCurrentTask+1)%(threadCount);
 	}
-	//osSched();
+	
+	printf ("\n osCurrentTask ");
+	printf("%d\n", osCurrentTask);
 	
 	threadList[osCurrentTask].state = ACTIVELY_RUNNING; 
 	ICSR |= 1<<28;	//changes pendSV state to pending
 	__asm("isb");	//tells compiler to run the "isb" instruction using assembly
+	
 }//declare global. copy and plaxe in theadscore and declare at start with extern
 
 
-void osSched(void){
-	osCurrentTask = (osCurrentTask+1)%(threadCount);
-	
-	while(threadList[osCurrentTask].state==SLEEP){
-		osCurrentTask = (osCurrentTask+1)%(threadCount);
-	}
-	
-}
 
 
 
 bool osKernelStart(){
+	
+	
 	if(threadCount>0){ //if at least one thread exists
 		osCurrentTask=-1; //set osCurrent task to -1 (to set up for osYield method)
 		//setThreadingWithPSP(threadList[0].TSP);
@@ -78,20 +80,20 @@ bool osKernelStart(){
 
 
 int task_switch(void){
-	printf("\n osCurrentTask");
-	printf ("%d\n", osCurrentTask);
+	//printf("\n osCurrentTask");
+	//printf ("%d\n", osCurrentTask);
 	__set_PSP((uint32_t)threadList[osCurrentTask].TSP);//set new PSP with TSP
 	return 1;
 }
 
 void SysTick_Handler(void){
 	int i = 0;
+	int timeElapsed = 0;
 	msTicks++;
 	
-	if (kernelStarted){
-		
-		/*
-		for (i=0; i<LIST_LENGTH; i++)
+	
+	
+		for (i=0; i<threadCount; i++)
 		{
 			if(threadList[i].state == SLEEP 
 				&& (msTicks-threadList[i].napStart)%threadList[i].napLength==0)
@@ -105,20 +107,36 @@ void SysTick_Handler(void){
 		//and the current time passed in each/new thread
 	
 		//can do this with a var that stores the old index and a timer???
-		if(storeTask != osCurrentTask) //means we've switched tasks
+		
+		
+		if(taskSwitched)
 		{
+			//printf ("\n taskswitched: ");
+			//printf("%d\n",taskSwitched);
+			taskSwitched = 0;
 			timeInThread = msTicks;
-			storeTask = osCurrentTask;
+			//storeTask = osCurrentTask;
+			//printf ("\n store task");
+			//printf("%d\n", storeTask);
+			
+			//printf ("\n starttime");
+			//printf("%d\n",timeInThread);
 		}
-	
-		if ((msTicks - timeInThread)%FORCE_SWITCH_TIME == 0)
+		//printf("\n timeelapsed: ");
+		timeElapsed = msTicks-timeInThread;
+		//printf("%d\n", timeElapsed);
+		
+		if ((timeElapsed-FORCE_SWITCH_TIME) >= 0 && taskSwitched==0)
 		{
+			printf("helloooooooooooooooooooooooooooooooooo");
+			pushValue = 8*4;
 			osYield();
 		}
-		*/
+		
 	
 	
-	}
+	
+	
 }
 
 void osSleep(int time){

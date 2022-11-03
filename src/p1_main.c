@@ -20,7 +20,7 @@ uint32_t MAXTHREADS=8;
 
 
 //uint32_t* getMSPInitialLocation(void);
-bool kernelStarted = 0;
+bool kernelStarted;
 
 void threadOne (void *args){
 	while(1)
@@ -57,31 +57,6 @@ void threadThree (void *args){
 
 int main( void ) 
 {
-	/*
-	//Always call this function at the start. It sets up various peripherals, the clock etc. If you don't call this
-	//you may see some weird behaviour
-	uint32_t* MSPPtr;//declaration of main stack pointer
-	uint32_t* PSPPtr;//declaration of process stack pointer
-	uint32_t offset = 512; //declaration of variable for offset, val is 512 per lab manual
-	
-	
-	SystemInit();
-	
-	printf("\n hello world"); //debug statement, earlier code segment
-	
-	//below finds and sets PSP value and moves into thread state
-	MSPPtr = getMSPInitialLocation(); // store MSP pointer in MSPPtr var
-	//PSPPtr = getNewThreadStack(offset); //create PSPPtr offset by prev val from MSPPtr
-	//setThreadingWithPSP(PSPPtr); //sets PSPPtr as the PSP pointer (in register), sets to Thread mode
-	
-	
-	//priority and scheduling
-	kernelInit(); //init memory structures and priority of interrupts necessary to run kernel
-								// currently only controlling priority of PendSV
-	osYield(); // called by kernel to schedule which threads to run
-	*/
-	
-	//newStart
 	uint32_t* MSPPtr;
 	SystemInit(); //should go first??
 	
@@ -89,11 +64,12 @@ int main( void )
 	MSPPtr = getMSPInitialLocation();
 	printf("\n MSP PTR: ");
 	printf ("%x\n", (int)&MSPPtr);
+	kernelStarted=0;
 	
 	kernelInit();
 	
 	
-	//SysTick_Config(SystemCoreClock/1000);
+	SysTick_Config(SystemCoreClock/1000);
 	
 	
 	
@@ -102,7 +78,7 @@ int main( void )
 	osCreateThread(threadTwo);
 	
 	
-	kernelStarted = osKernelStart();
+	osKernelStart();
 	
 	
 	

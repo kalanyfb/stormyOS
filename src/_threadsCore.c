@@ -94,8 +94,8 @@ void osIdleTask(void* args){
 	while(1)
 	{
 		printf("\n idlethread");
-		printf ("%d\n", kernelStarted);
-		osYield();
+		//printf ("%d\n", kernelStarted);
+		//osYield();
 	}
 }
 
