@@ -12,12 +12,15 @@
 #include "_threadsCore.h"
 #include "_kernelCore.h"
 
-#include "osDefs.h"
+//#include "osDefs.h"
 
 
 uint32_t OFFSET=512;
 uint32_t MAXTHREADS=8;
 
+
+//uint32_t* getMSPInitialLocation(void);
+bool kernelStarted = 0;
 
 void threadOne (void *args){
 	while(1)
@@ -31,8 +34,8 @@ void threadTwo (void *args){
 	while(1)
 	{
 		printf("\n thread 2 ");
-		osSleep(1000);
-		//osYield();
+		//osSleep(1000);
+		osYield();
 	}
 }
 
@@ -90,12 +93,14 @@ int main( void )
 	kernelInit();
 	
 	
-	SysTick_Config(SystemCoreClock/1000);
+	//SysTick_Config(SystemCoreClock/1000);
+	
 	
 	
 	//osCreateThread(osIdleTask);
 	osCreateThread(threadOne);
 	osCreateThread(threadTwo);
+	
 	
 	kernelStarted = osKernelStart();
 	

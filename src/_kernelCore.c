@@ -1,8 +1,8 @@
 #include "_kernelCore.h"
-#include "_threadsCore.h"
+//#include "_threadsCore.h"
 //#include "p1_main.c"
 #include <LPC17xx.h>
-//#include "osDefs.h"
+#include "osDefs.h"
 
 thread threadList [LIST_LENGTH];
 //thread sleepList [8];
@@ -15,8 +15,10 @@ uint32_t mspAddr;
 volatile uint32_t msTicks = 0;
 int storeTask = -1;
 uint32_t timeInThread = 0;
+extern bool kernelStarted;
 
-
+extern void osCreateThread(void(*userFunction)(void *args));
+extern void osIdleTask(void* args);
 
 //this function initializes memory structs and interrupts required to run kernel
 void kernelInit(void){
@@ -25,7 +27,7 @@ void kernelInit(void){
 	mspAddr = *MSP_Original; //get address of original MSP
 	
 	//AAA
-	osCreateThread(osIdleTask);
+	//osCreateThread(osIdleTask);
 }
 
 //this function is called by the kernel; it schedules which threads to run
@@ -39,9 +41,11 @@ void osYield(void){
 	
 	osSched();
 	
+	threadList[osCurrentTask].state = ACTIVELY_RUNNING; 
 	ICSR |= 1<<28;	//changes pendSV state to pending
 	__asm("isb");	//tells compiler to run the "isb" instruction using assembly
 }//declare global. copy and plaxe in theadscore and declare at start with extern
+
 
 void osSched(void){
 	osCurrentTask = (osCurrentTask+1)%(threadCount);
@@ -55,7 +59,6 @@ void osSched(void){
 
 
 bool osKernelStart(){
-	
 	if(threadCount>0){ //if at least one thread exists
 		osCurrentTask=-1; //set osCurrent task to -1 (to set up for osYield method)
 		//setThreadingWithPSP(threadList[0].TSP);
@@ -70,6 +73,8 @@ bool osKernelStart(){
 
 
 int task_switch(void){
+	printf("\n osCurrentTask");
+	printf ("%d\n", osCurrentTask);
 	__set_PSP((uint32_t)threadList[osCurrentTask].TSP);//set new PSP with TSP
 	return 1;
 }
@@ -80,6 +85,7 @@ void SysTick_Handler(void){
 	
 	if (kernelStarted){
 		
+		/*
 		for (i=0; i<LIST_LENGTH; i++)
 		{
 			if(threadList[i].state == SLEEP 
@@ -104,7 +110,7 @@ void SysTick_Handler(void){
 		{
 			osYield();
 		}
-		
+		*/
 	
 	
 	}

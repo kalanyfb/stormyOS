@@ -7,7 +7,7 @@
 #include <LPC17xx.h>
 #include <stdbool.h>
 
-#include "osDefs.h"
+//#include "osDefs.h"
 
 void kernelInit(void);		//initializes memory structures and interrupts necessary to run the kernel
 void osYield(void);		//called by the kernel to schedule which threads to run

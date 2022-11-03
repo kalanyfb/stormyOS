@@ -5,7 +5,7 @@
 <h2>Tool Versions:</h2>
 IDE-Version: µVision V5.31.0.0
 Copyright (C) 2020 ARM Ltd and ARM Germany GmbH. All rights reserved.
-License Information: Eric Praetzel, ECE Dept, LIC=----
+License Information: Eric Praetzel, `ECE Dept, LIC=----
  
 Tool Versions:
 Toolchain:       MDK-Lite  Version: 5.31.0.0
@@ -21,7 +21,7 @@ Target DLL:      UL2CM3.DLL V1.163.4.0
 Dialog DLL:      TARMP1.DLL V1.26.0.0
  
 <h2>Project:</h2>
-\\ecfile1.uwaterloo.ca\e23jung\My Documents\MTE 241\stormy\stormy.uvprojx
+C:\Users\k2bisson\Downloads\stormyOS-main\stormyOS-main\stormy.uvprojx
 Project File Date:  11/01/2022
 
 <h2>Output:</h2>
@@ -34,14 +34,13 @@ assembling svc_calls.s...
 compiling uart.c...
 assembling startup_LPC17xx.s...
 compiling _kernelCore.c...
+src\_kernelCore.c(83): warning:  #177-D: variable "i"  was declared but never referenced
+  	int i = 0;
+src\_kernelCore.c: 1 warning, 0 errors
 compiling system_LPC17xx.c...
 linking...
-.\Objects\stormy.axf: Error: L6200E: Symbol kernelStarted multiply defined (by p1_main.o and _threadscore.o).
-.\Objects\stormy.axf: Error: L6200E: Symbol kernelStarted multiply defined (by _kernelcore.o and _threadscore.o).
-Not enough information to list image symbols.
-Not enough information to list load addresses in the image map.
-Finished: 2 information, 0 warning and 2 error messages.
-".\Objects\stormy.axf" - 2 Error(s), 0 Warning(s).
+Program Size: Code=3032 RO-data=236 RW-data=84 ZI-data=8484  
+".\Objects\stormy.axf" - 0 Error(s), 1 Warning(s).
 
 <h2>Software Packages used:</h2>
 
@@ -68,11 +67,10 @@ Package Vendor: Keil
    * Component: ARM::CMSIS:CORE:5.5.0
 
    * Component: Keil::Device:Startup:1.0.0
-      Source file:   Device\Source\ARM\startup_LPC17xx.s
-      Source file:   Device\Source\system_LPC17xx.c
       Include file:  RTE_Driver\Config\RTE_Device.h
+      Source file:   Device\Source\system_LPC17xx.c
       Include file:  Device\Include\LPC17xx.h
-Target not created.
+      Source file:   Device\Source\ARM\startup_LPC17xx.s
 Build Time Elapsed:  00:00:01
 </pre>
 </body>

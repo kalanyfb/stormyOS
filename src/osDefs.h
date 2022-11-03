@@ -18,7 +18,7 @@
 #define LIST_LENGTH 8
 #define FORCE_SWITCH_TIME 1000
 
-bool kernelStarted = 0;
+//bool kernelStarted = 0;
 
 typedef struct thread{
 	//function pointer

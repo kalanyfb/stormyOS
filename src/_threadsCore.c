@@ -1,5 +1,5 @@
 #include "_threadsCore.h"
-#include "_kernelCore.h"
+//#include "_kernelCore.h"
 #include <LPC17xx.h>
 #include <stdint.h>
 #include "stdio.h"
@@ -9,6 +9,10 @@ extern thread threadList [8];
 int threadCount=0;
 extern uint32_t OFFSET;
 extern uint32_t MAXTHREADS;
+
+extern bool kernelStarted;
+
+extern void osYield(void);
 
 uint32_t* getMSPInitialLocation(void){
 	
@@ -91,7 +95,8 @@ void osIdleTask(void* args){
 	while(1)
 	{
 		printf("\n idlethread");
-		//osYield();
+		printf ("%d\n", kernelStarted);
+		osYield();
 	}
 }
 
