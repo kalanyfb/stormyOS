@@ -11,7 +11,6 @@ extern uint32_t OFFSET;
 extern uint32_t MAXTHREADS;
 
 extern bool kernelStarted;
-
 extern void osYield(void);
 
 uint32_t* getMSPInitialLocation(void){

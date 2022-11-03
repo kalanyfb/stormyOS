@@ -39,7 +39,12 @@ void osYield(void){
 		threadList[osCurrentTask].state = WAITING; 
 	}
 	
-	osSched();
+	osCurrentTask = (osCurrentTask+1)%(threadCount);
+	
+	while(threadList[osCurrentTask].state==SLEEP){
+		osCurrentTask = (osCurrentTask+1)%(threadCount);
+	}
+	//osSched();
 	
 	threadList[osCurrentTask].state = ACTIVELY_RUNNING; 
 	ICSR |= 1<<28;	//changes pendSV state to pending
