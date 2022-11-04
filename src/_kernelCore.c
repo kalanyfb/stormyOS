@@ -45,23 +45,27 @@ void osYield(void){
 	mutex = false; //sets mutex to false to ensure that systick cannot do anything while yield occurs
 	
 	if(osCurrentTask >= 0) //checks to ensure that at least one thread exists
-	{
-		threadList[osCurrentTask].TSP = (uint32_t*)(__get_PSP() - pushValue); //pushes (16 or 8) uint32_ts to move the TSP down below garbage registers
-		if(osCurrentTask==0) //checks for if the current running task has an index of one (idlethread)
+	{	
+		//pushes (16 or 8) uint32_ts to move the TSP down below garbage registers
+		threadList[osCurrentTask].TSP = (uint32_t*)(__get_PSP() - pushValue); 
+		if(osCurrentTask==0) //checks if the current running task has an index of one (idleThread)
 		{
 			nextState = IDLE;//sets its nextState to idle
 		}
-		threadList[osCurrentTask].state = nextState; //sets the state of currentTask to its nextState for when its called again
-		nextState = WAITING; //defayults state back to WAITING
+		//sets the state of currentTask to its nextState for when its called again
+		threadList[osCurrentTask].state = nextState; 
+		nextState = WAITING; //defaults state back to WAITING
 		pushValue = 16*4; //defaults back to 16*4 (ie 16 registers to push)
 	}
 	
-	osCurrentTask = (osCurrentTask+1)%(threadCount); //increments osCurrentTask (% is to make sure it cycles through 0 to threadCount instead of going above)
+	//increments osCurrentTask (% is to make sure it cycles through 0 to threadCount instead of going above)
+	osCurrentTask = (osCurrentTask+1)%(threadCount); 
 	
-	printf (":))"); //would not run without this ! race case
+	printf (":))"); //would not run without this ! (race case)
 	
+	//checks to ensure we do not accidentally run the sleeping thread at all OR the idlethread without them all being asleep
 	while((threadList[osCurrentTask].state==SLEEP 
-		|| threadList[osCurrentTask].state == IDLE) && allSleep == 0){ //checks to ensure that we do not accidentally run the sleeping thread at all OR the idlethread without them all being asleep
+		|| threadList[osCurrentTask].state == IDLE) && allSleep == 0){ 
 		numSleepThreads++;
 		if(numSleepThreads==threadCount) //checks for condition of all threads sleeping
 		{
@@ -71,7 +75,8 @@ void osYield(void){
 		}
 		else
 		{
-			osCurrentTask = (osCurrentTask+1)%(threadCount);//defaults to continually increment/look for non-sleeping thread
+			//defaults to continually increment/look for non-sleeping thread
+			osCurrentTask = (osCurrentTask+1)%(threadCount);
 		}
 	}
 	allSleep = 0; //resets allSleep to false for next iteration
@@ -91,7 +96,7 @@ bool osKernelStart(){
 		
 		__set_CONTROL(1<<1);
 		__set_PSP((uint32_t)threadList[1].TSP); //run first thread first
-		threadList[1].state=ACTIVELY_RUNNING; // for initialization of kernel, set first thread's state to actively running
+		threadList[1].state=ACTIVELY_RUNNING; // for init of kernel, set first thread's state to actively running
 		
 		osYield();//call osYield to run next thread
 	}
@@ -113,8 +118,9 @@ void SysTick_Handler(void){
 		//SLEEP STATE checking
 		for (i=0; i<threadCount; i++) //for loop to iterate and check all threads for sleep condition
 		{
+			//checks if a thread's state is sleep AND if its naptime is over (wakeup)
 			if(threadList[i].state == SLEEP 
-				&& (msTicks-threadList[i].napStart)>=threadList[i].napLength) //checks if a thread's state is sleep AND if its naptime is over (wakeup)
+				&& (msTicks-threadList[i].napStart)>=threadList[i].napLength) 
 			{
 				threadList[i].state = WAITING; //set state to WAITING so that it is ready to be called 
 				threadList[i].napStart=0; //reset napSTART
@@ -124,12 +130,12 @@ void SysTick_Handler(void){
 		//FORCED CONTEXT SWITCHING checking
 		if(taskSwitched) //checks if task has just switched
 		{
-			taskSwitched = 0; //initializes variables, sets taskSwitched to 0 so that it cant be called until the task has switched again
+			taskSwitched = 0; //inits vars, sets taskSwitched to 0 so it cant be called until the task has switched again
 			timeInThread = msTicks; //current msTicks stored in timeInThread
 		}
 		timeElapsed = msTicks-timeInThread; //time elapsed from the last task switch is constantly calculated
 		
-		if ((timeElapsed-FORCE_SWITCH_TIME) >= 0 && taskSwitched==0) //if the max time has elapsed, then force a context sswitch
+		if ((timeElapsed-FORCE_SWITCH_TIME) >= 0 && taskSwitched==0) //if the max time has elapsed, then force a context switch
 		{
 			printf("helloooooooooooooooooooooooooooooooooo");
 			pushValue = 8*4; //push 8 registers bc of tail chain condition
