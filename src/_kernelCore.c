@@ -129,13 +129,14 @@ void SysTick_Handler(void){
 		
 		//FORCED CONTEXT SWITCHING checking
 		if(taskSwitched) //checks if task has just switched
-		{
-			taskSwitched = 0; //inits vars, sets taskSwitched to 0 so it cant be called until the task has switched again
+		{	
+			//inits vars, sets taskSwitched to 0 so it cant be called until the task has switched again
+			taskSwitched = 0; 
 			timeInThread = msTicks; //current msTicks stored in timeInThread
 		}
 		timeElapsed = msTicks-timeInThread; //time elapsed from the last task switch is constantly calculated
 		
-		if ((timeElapsed-FORCE_SWITCH_TIME) >= 0 && taskSwitched==0) //if the max time has elapsed, then force a context switch
+		if ((timeElapsed-FORCE_SWITCH_TIME) >= 0 && taskSwitched==0) //if max time elapsed, force context switch
 		{
 			printf("helloooooooooooooooooooooooooooooooooo");
 			pushValue = 8*4; //push 8 registers bc of tail chain condition
