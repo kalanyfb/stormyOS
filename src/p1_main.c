@@ -25,29 +25,31 @@ bool kernelStarted;
 void threadOne (void *args){
 	while(1)
 	{
-		printf("\n thread 1 ");
-		osYield();
+		printf("\n thread 1************************************************* ");
+		//osYield();
+		osSleep(200);
 	}
 }
 
 void threadTwo (void *args){
 	while(1)
 	{
-		printf("\n thread 2 ");
-		//osSleep(1000);
-		osYield();
+		printf("\n thread 2_________________________________________________ ");
+		osSleep(700);
+		//osYield();
 	}
 }
 
 void threadThree (void *args){
 	while(1)
 	{
-		printf("\n thread 3 ");
+		printf("\n thread 3                     &&&&                    &&&&       ");
 		
 	}
 }
 
-/*void osIdleTask(void* args){
+/*
+void osIdleTask(void* args){
 	while(1)
 	{
 		printf("\n default thread");
@@ -73,11 +75,10 @@ int main( void )
 	
 	
 	
-	//osCreateThread(osIdleTask);
+	
 	osCreateThread(threadOne);
 	osCreateThread(threadTwo);
-	
-	
+	//osCreateThread(threadThree);
 	osKernelStart();
 	
 	

@@ -18,6 +18,10 @@ bool taskSwitched = 0;
 uint32_t timeInThread = 0;
 extern bool kernelStarted;
 int pushValue = 16*4;
+int nextState = WAITING;
+int numSleepThreads = 0;
+bool allSleep = 0;
+bool mutex;
 
 extern void osCreateThread(void(*userFunction)(void *args));
 extern void osIdleTask(void* args);
@@ -30,30 +34,57 @@ void kernelInit(void){
 	
 	//AAA
 	osCreateThread(osIdleTask);
+	threadList[0].state = IDLE;
+	
 }
 
 //this function is called by the kernel; it schedules which threads to run
 void osYield(void){
+	mutex = false;
 	taskSwitched = 1;
-	printf ("\n taskswitched: ");
-	printf("%d\n",taskSwitched);
+	//printf ("\n taskswitched: ");
+	//printf("%d\n",taskSwitched);
+	
+	
+	
 	if(osCurrentTask >= 0)
 	{
 		threadList[osCurrentTask].TSP = (uint32_t*)(__get_PSP() - pushValue); //pushes 16 uint32_ts to move the TSP down below garbage registers
-		threadList[osCurrentTask].state = WAITING; 
+		if(osCurrentTask==0)
+		{
+			nextState = IDLE;
+		}
+		threadList[osCurrentTask].state = nextState; 
+		nextState = WAITING;
 		pushValue = 16*4;
 	}
 	
+	
 	osCurrentTask = (osCurrentTask+1)%(threadCount);
 	
-	while(threadList[osCurrentTask].state==SLEEP){
-		osCurrentTask = (osCurrentTask+1)%(threadCount);
+	printf (":))");
+	
+	while((threadList[osCurrentTask].state==SLEEP 
+		|| threadList[osCurrentTask].state == IDLE) && allSleep == 0){
+		//printf ("here");
+		numSleepThreads++;
+		//printf("numSleepThreads");
+		//printf("%d\n", numSleepThreads);
+		if(numSleepThreads==threadCount)
+		{
+			allSleep = 1;
+			numSleepThreads = 0; //refresh
+			osCurrentTask = 0; //index of idle thread
+		}
+		else
+		{
+			osCurrentTask = (osCurrentTask+1)%(threadCount);
+		}
 	}
+	allSleep = 0;
 	
-	printf ("\n osCurrentTask ");
-	printf("%d\n", osCurrentTask);
-	
-	threadList[osCurrentTask].state = ACTIVELY_RUNNING; 
+	threadList[osCurrentTask].state = ACTIVELY_RUNNING;
+	mutex = true;
 	ICSR |= 1<<28;	//changes pendSV state to pending
 	__asm("isb");	//tells compiler to run the "isb" instruction using assembly
 	
@@ -64,7 +95,6 @@ void osYield(void){
 
 
 bool osKernelStart(){
-	
 	
 	if(threadCount>0){ //if at least one thread exists
 		osCurrentTask=-1; //set osCurrent task to -1 (to set up for osYield method)
@@ -87,16 +117,17 @@ int task_switch(void){
 }
 
 void SysTick_Handler(void){
-	int i = 0;
-	int timeElapsed = 0;
-	msTicks++;
+	if(mutex==true){
+		int i = 0;
+		int timeElapsed = 0;
+		msTicks++;
 	
 	
 	
 		for (i=0; i<threadCount; i++)
 		{
 			if(threadList[i].state == SLEEP 
-				&& (msTicks-threadList[i].napStart)%threadList[i].napLength==0)
+				&& (msTicks-threadList[i].napStart)>=threadList[i].napLength)
 			{
 				threadList[i].state = WAITING; // and then remove form sleepList?
 				threadList[i].napStart=0;
@@ -135,12 +166,13 @@ void SysTick_Handler(void){
 		
 	
 	
-	
+	}
 	
 }
 
 void osSleep(int time){
 	threadList[osCurrentTask].state = SLEEP;
+	nextState=SLEEP;
 	threadList[osCurrentTask].napLength = time; //set naptime var
 	threadList[osCurrentTask].napStart = msTicks; //set napt start var
 	

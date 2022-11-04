@@ -10,13 +10,13 @@
 #define MAIN_STACK_SIZE 0x200
 
 //thread states
-#define CREATED 0
+#define IDLE 0
 #define ACTIVELY_RUNNING 1 //one thread only
 #define WAITING 2
 #define SLEEP 3
 
 #define LIST_LENGTH 8
-#define FORCE_SWITCH_TIME 1000
+#define FORCE_SWITCH_TIME 100
 
 //bool kernelStarted = 0;
 

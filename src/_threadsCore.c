@@ -63,6 +63,7 @@ void osCreateThread(void(*userFunction)(void *args)){
 	{
 		threadList[threadCount].fun_ptr = userFunction;
 		threadList[threadCount].TSP=getNewThreadStack(MAIN_STACK_SIZE + (threadCount)*THREAD_STACK_SIZE); //AAA
+		threadList[threadCount].state = WAITING;
 		
 		printf("%x,\n", (int)(threadList[threadCount].TSP));
 		*(--threadList[threadCount].TSP) = 1<<24;
@@ -90,10 +91,12 @@ void osCreateThread(void(*userFunction)(void *args)){
 }
 
 //should only run if no other options
+
 void osIdleTask(void* args){
 	while(1)
 	{
 		printf("\n idlethread");
+		osYield();
 		//printf ("%d\n", kernelStarted);
 		//osYield();
 	}
