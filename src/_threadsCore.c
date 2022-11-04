@@ -14,8 +14,10 @@ extern void osYield(void);
 
 uint32_t* getMSPInitialLocation(void){
 	
-	uint32_t* vectorTableStart = (uint32_t*)0x0; //checks vector table location 0x0 for MSP address
-	uint32_t* MSPInitialLocation = (uint32_t*) *vectorTableStart; //creates the pointer to be used for the MSP from the address in prev line
+	//checks vector table location 0x0 for MSP address
+	uint32_t* vectorTableStart = (uint32_t*)0x0; 
+	//creates the pointer to be used for the MSP from the address in prev line
+	uint32_t* MSPInitialLocation = (uint32_t*) *vectorTableStart; 
 	
 	return MSPInitialLocation; //returns MSP
 }
@@ -30,7 +32,8 @@ uint32_t* getNewThreadStack(uint32_t OFFSET){
 	uint32_t* newPSP; //initializes pointer that will be PSP
 	
 	if (PSPAddress%8 != 0){ //checks for if divisible by 8
-		addOffset = PSPAddress %8; // if above is false, sets additional offset value to remainder to reach 8
+		// if above is false, sets additional offset value to remainder to reach 8
+		addOffset = PSPAddress %8; 
 	}
 	PSPAddress += addOffset; //additional offset is added to PSP address to make it divisible by 8
 	newPSP = (uint32_t*)(PSPAddress); // newPSP is set with address that is (correctly) offset
@@ -43,7 +46,8 @@ uint32_t* getNewThreadStack(uint32_t OFFSET){
 
 void setThreadingWithPSP(uint32_t* threadStack){
 	
-	__set_PSP((uint32_t)threadStack);// set psp with address of threadstack casted to uint_32 refer to given code (1<,1) instead of (2)
+	// set psp with address of threadstack casted to uint_32 refer to given code (1<,1) instead of (2)
+	__set_PSP((uint32_t)threadStack);
 	__set_CONTROL(2); //set control to 2 to go into thread state
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -58,7 +62,7 @@ void osCreateThread(void(*userFunction)(void *args)){
 	if (threadCount<MAXTHREADS)
 	{
 		threadList[threadCount].fun_ptr = userFunction;
-		threadList[threadCount].TSP=getNewThreadStack(MAIN_STACK_SIZE + (threadCount)*THREAD_STACK_SIZE); //AAA
+		threadList[threadCount].TSP=getNewThreadStack(MAIN_STACK_SIZE + (threadCount)*THREAD_STACK_SIZE); 
 		threadList[threadCount].state = WAITING;
 		
 		printf("%x,\n", (int)(threadList[threadCount].TSP));
@@ -87,8 +91,9 @@ void osCreateThread(void(*userFunction)(void *args)){
 //should only run if no other options
 void osIdleTask(void* args){
 	while(1)
-	{
-		printf("\n idlethread"); //for testing it prints "idlethread" but it should do nothing when actually implement
+	{	
+		//for testing- prints "idlethread" but should do nothing when actually implement
+		printf("\n idlethread");
 		osYield();
 	}
 }
