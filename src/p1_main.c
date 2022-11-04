@@ -12,22 +12,16 @@
 #include "_threadsCore.h"
 #include "_kernelCore.h"
 
-//#include "osDefs.h"
-
-
 uint32_t OFFSET=512;
 uint32_t MAXTHREADS=8;
 
-
-//uint32_t* getMSPInitialLocation(void);
-bool kernelStarted;
 
 void threadOne (void *args){
 	while(1)
 	{
 		printf("\n thread 1************************************************* ");
-		//osYield();
-		osSleep(200);
+		osYield();
+		//osSleep(20);
 	}
 }
 
@@ -60,25 +54,24 @@ void osIdleTask(void* args){
 int main( void ) 
 {
 	uint32_t* MSPPtr;
-	SystemInit(); //should go first??
+	SystemInit(); 
 	
 	printf("\n hello world"); 
 	MSPPtr = getMSPInitialLocation();
 	printf("\n MSP PTR: ");
 	printf ("%x\n", (int)&MSPPtr);
-	kernelStarted=0;
 	
+	//initialize kernel settings/vars
 	kernelInit();
 	
+	SysTick_Config(SystemCoreClock/1000); //calls systick_handler every ms
 	
-	SysTick_Config(SystemCoreClock/1000);
-	
-	
-	
-	
+	//initialize threads with functions at top of file
 	osCreateThread(threadOne);
 	osCreateThread(threadTwo);
-	//osCreateThread(threadThree);
+	osCreateThread(threadThree);
+	
+	//start kernel
 	osKernelStart();
 	
 	
@@ -89,141 +82,7 @@ int main( void )
 
 
 
-/*
 
-void turnOn(unsigned int leds) {
-	int led0 = 1;
-	int led1 = 2;
-	int led2 = 4;
-	int led3 = 8;
-	int led4 = 16;
-	int led5 = 32;
-	int led6 = 64;
-	int led7 = 128;
-	
-	if (leds & led0) {
-		LPC_GPIO1 -> FIOSET |= 1U << 28;
-	}
-	if (leds & led1) {
-		LPC_GPIO1 -> FIOSET |= 1U << 29;
-	}
-	if (leds & led2) {
-		LPC_GPIO1 -> FIOSET |= 1U << 31;
-	}
-	if (leds & led3) {
-		LPC_GPIO2 -> FIOSET |= 1U << 2;
-	}
-	if (leds & led4) {
-		LPC_GPIO2 -> FIOSET |= 1U << 3;
-	}
-	if (leds & led5) {
-		LPC_GPIO2 -> FIOSET |= 1U << 4;
-	}
-	if (leds & led6) {
-		LPC_GPIO2 -> FIOSET |= 1U << 5;
-	}
-	if (leds & led7) {
-		LPC_GPIO2 -> FIOSET |= 1U << 6;
-	}
-}
-
-
-
-void read (void){
-	unsigned int left = 0x800000;
-	unsigned int right = 0x2000000; 
-	unsigned int up = 0x1000000;
-	unsigned int down = 0x4000000; 
-	unsigned int press = 1048576; 
-	unsigned int btn = 1024;
-	
-	if (!(LPC_GPIO1->FIOPIN & left))
-		printf("left\n");
-	if (!(LPC_GPIO1->FIOPIN & right))
-		printf("right\n");
-	if (!(LPC_GPIO1->FIOPIN & up))
-		printf("up\n");
-	if (!(LPC_GPIO1->FIOPIN & down))
-		printf("down\n");
-	if (!(LPC_GPIO1->FIOPIN & press))
-		printf("press\n");
-	if (!(LPC_GPIO2->FIOPIN & btn))
-		printf("btn\n");
-}	
-
-
-
-//This is C. The expected function heading is int main(void)
-int main( void ) 
-{
-	//Always call this function at the start. It sets up various peripherals, the clock etc. If you don't call this
-	//you may see some weird behaviour
-	uint32_t* MSPPtr;
-	uint32_t* PSPPtr;
-	uint32_t offset;
-	SystemInit();
-	
-	
-	printf("\n hello world");
-	
-	
-	
-	MSPPtr = getMSPInitialLocation();
-	printf ("\n MSP: ");
-	printf ("%d", (int)&MSPPtr);
-	
-	offset = 512;
-	PSPPtr = getNewThreadStack(offset);
-	//printf ("\n 3 ");
-	//printf ("%d", (int)&PSPPtr);
-	
-	setThreadingWithPSP(PSPPtr);
-	//printf ("\n PSP: ");
-	//printf ("%d", (int)&PSPPtr);
-	
-	//setThreadingwithPSP(PSPPtr);
-	
-	kernelInit();
-	osYield();
-	
-	while (1);
-	
-	//Printf now goes to the UART, so be sure to have PuTTY open and connected
-	
-		
-	
-	//Your code should always terminate in an endless loop if it is done. If you don't
-	//the processor will enter a hardfault and will be weird
-	
-	int size = 1;
-	while(1) {
-		unsigned int up = 0x1000000;
-		unsigned int down = 0x4000000;
-		unsigned int press = 1048576; 
-		
-		if (!(LPC_GPIO1->FIOPIN & up)){
-			size++;
-		}
-		if (!(LPC_GPIO1->FIOPIN & down)){
-			if (size <2)
-				size--;
-		}
-		printf ("size: ");
-		printf ("%d", size);
-		printf("\n");
-		if (!(LPC_GPIO1->FIOPIN & press)){
-			int* array = malloc(size*sizeof(int));
-			for (int i = 1; i<=size; i++)
-			{	
-				array[i]=i;
-				printf ("%d", i);
-				printf("\n");
-			}
-			free(array);
-			size = 1;
-		}
-	}
-	*/
 
 
 

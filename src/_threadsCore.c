@@ -10,7 +10,6 @@ int threadCount=0;
 extern uint32_t OFFSET;
 extern uint32_t MAXTHREADS;
 
-extern bool kernelStarted;
 extern void osYield(void);
 
 uint32_t* getMSPInitialLocation(void){
@@ -22,10 +21,7 @@ uint32_t* getMSPInitialLocation(void){
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-uint32_t* getNewThreadStack(uint32_t OFFSET){ // can i get a new stack, include error checking later(???)
-	
-	//should i keep the msp value as a global variable? or just the current MSP?\
-	//should decrement msp
+uint32_t* getNewThreadStack(uint32_t OFFSET){ 
 	
 	uint32_t* currentMSP = getMSPInitialLocation(); //gets pointer to MSP
 	uint32_t MSPAddress = (uint32_t)currentMSP; //address of MSP, casted to 32-bit integer 
@@ -38,8 +34,8 @@ uint32_t* getNewThreadStack(uint32_t OFFSET){ // can i get a new stack, include 
 	}
 	PSPAddress += addOffset; //additional offset is added to PSP address to make it divisible by 8
 	newPSP = (uint32_t*)(PSPAddress); // newPSP is set with address that is (correctly) offset
-	printf ("PSP address:");
 	
+	printf ("PSP address:");
 	printf ("%x\n", PSPAddress);
 	return newPSP;
 }
@@ -69,8 +65,6 @@ void osCreateThread(void(*userFunction)(void *args)){
 		*(--threadList[threadCount].TSP) = 1<<24;
 		printf ("%x\n", *(threadList[threadCount].TSP));
 		*(--threadList[threadCount].TSP) = (uint32_t)userFunction;
-		//printf ("%d\n", (uint32_t)userFunction);
-		//printf("%d\n", *(threadList[threadCount].TSP));
 		
 		patternedValue=0xA0;
 		for (i = 0; i<6; i++){
@@ -91,14 +85,11 @@ void osCreateThread(void(*userFunction)(void *args)){
 }
 
 //should only run if no other options
-
 void osIdleTask(void* args){
 	while(1)
 	{
-		printf("\n idlethread");
+		printf("\n idlethread"); //for testing it prints "idlethread" but it should do nothing when actually implement
 		osYield();
-		//printf ("%d\n", kernelStarted);
-		//osYield();
 	}
 }
 
