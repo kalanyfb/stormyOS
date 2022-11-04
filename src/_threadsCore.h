@@ -10,7 +10,7 @@ uint32_t* getMSPInitialLocation(void);
 //Returns address of new PSP with offset of “offset” bytes from MSP. 
 uint32_t* getNewThreadStack(uint32_t offset); 
 
-//Sets value of PSP to threadStack and ensures that microcontroller is using that value by changing CONTROL register
+//Sets value of PSP to threadStack & ensures microcontroller is using that value by changing CONTROL register
 void setThreadingWithPSP(uint32_t* threadStack); 
 
 //creates thread and puts it in array, inits stack values
