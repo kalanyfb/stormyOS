@@ -17,6 +17,8 @@ void osSleep(int time);
 void osSched(void);
 
 #define SHPR3 *(uint32_t*)0xE000ED20	//this memory location is pointer to a uint32_t
+#define SHPR2 *(uint32_t*)0xE000ED1C //stores SVC's priority
+
 #define ICSR *(uint32_t*)0xE000ED04	//ICSR is at this memory location
 
 #endif

@@ -9,7 +9,6 @@ extern thread threadList [8];
 int threadCount=0;
 extern uint32_t OFFSET;
 extern uint32_t MAXTHREADS;
-
 extern void osYield(void);
 
 uint32_t* getMSPInitialLocation(void){

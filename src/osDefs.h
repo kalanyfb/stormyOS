@@ -14,6 +14,7 @@
 #define ACTIVELY_RUNNING 1 //one thread only
 #define WAITING 2
 #define SLEEP 3
+#define YIELD_SWITCH 0
 
 #define LIST_LENGTH 8
 #define FORCE_SWITCH_TIME 100

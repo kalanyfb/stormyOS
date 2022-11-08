@@ -24,7 +24,7 @@ int numSleepThreads = 0; //value to see if all threads are asleep and therefore 
 bool allSleep = 0; //if numSleepThreads == number of threads (idle is treated similarly to sleeping for this check)
 
 //mutex
-bool mutex;
+//bool mutex;
 
 //functions from __threadsCore.c that will be used in __kernelCore.c
 extern void osCreateThread(void(*userFunction)(void *args)); 
@@ -33,7 +33,10 @@ extern void osIdleTask(void* args);
 //this function initializes memory structs and interrupts required to run kernel
 void kernelInit(void){
 	uint32_t * MSP_Original = 0; //may not need
-	SHPR3 |= 0xFF << 16;	//sets priority of interrupt; bit shifts 0xFF by 16 and bitwise OR SHPR3 with that value
+	SHPR3 |= 0xFE << 16;	//sets priority of the PENDSV interrupt; bit shifts 0xFF by 16 and bitwise OR SHPR3 with that value
+	SHPR3 |= 0xFFU << 24; //Set the priority of SysTick to be the weakest
+	SHPR2 |= 0xFDU << 24; //Set the priority of SVC the be the strongest
+	
 	mspAddr = *MSP_Original; //get address of original MSP
 	
 	osCreateThread(osIdleTask); //idleTask is created in kernelInit so that RTOS users cannot access the idle task
@@ -42,50 +45,8 @@ void kernelInit(void){
 
 //this function is called by the kernel; it schedules which threads to run
 void osYield(void){
-	mutex = false; //sets mutex to false to ensure that systick cannot do anything while yield occurs
-	
-	if(osCurrentTask >= 0) //checks to ensure that at least one thread exists
-	{	
-		//pushes (16 or 8) uint32_ts to move the TSP down below garbage registers
-		threadList[osCurrentTask].TSP = (uint32_t*)(__get_PSP() - pushValue); 
-		if(osCurrentTask==0) //checks if the current running task has an index of one (idleThread)
-		{
-			nextState = IDLE;//sets its nextState to idle
-		}
-		//sets the state of currentTask to its nextState for when its called again
-		threadList[osCurrentTask].state = nextState; 
-		nextState = WAITING; //defaults state back to WAITING
-		pushValue = 16*4; //defaults back to 16*4 (ie 16 registers to push)
-	}
-	
-	//increments osCurrentTask (% is to make sure it cycles through 0 to threadCount instead of going above)
-	osCurrentTask = (osCurrentTask+1)%(threadCount); 
-	
-	printf (":))"); //would not run without this ! (race case)
-	
-	//checks to ensure we do not accidentally run the sleeping thread at all OR the idlethread without them all being asleep
-	while((threadList[osCurrentTask].state==SLEEP 
-		|| threadList[osCurrentTask].state == IDLE) && allSleep == 0){ 
-		numSleepThreads++;
-		if(numSleepThreads==threadCount) //checks for condition of all threads sleeping
-		{
-			allSleep = 1; //if all sleeping, set bool value to true to exit while loop
-			numSleepThreads = 0; // refresh num of sleeping threads to 0 for next iteration
-			osCurrentTask = 0; //index of idle thread to run the idle thread
-		}
-		else
-		{
-			//defaults to continually increment/look for non-sleeping thread
-			osCurrentTask = (osCurrentTask+1)%(threadCount);
-		}
-	}
-	allSleep = 0; //resets allSleep to false for next iteration
-	
-	taskSwitched = 1; //sets taskSwitched to true to ensure that systick starts timer for this thread now
-	threadList[osCurrentTask].state = ACTIVELY_RUNNING; //sets thread that will run next to ACTIVELY_RUNNING state
-	mutex = true; //sets mutex to true to allow systick to run
-	ICSR |= 1<<28;	//changes pendSV state to pending
-	__asm("isb");	//tells compiler to run the "isb" instruction using assembly
+	//trigger SVC right away
+	__ASM("SVC #0");
 }
 
 
@@ -110,7 +71,7 @@ int task_switch(void){
 }
 
 void SysTick_Handler(void){
-	if(mutex==true){ //checks if mutex == true to use systick handler
+	//if(mutex==true){ //checks if mutex == true to use systick handler
 		int i = 0; //count variable initialized
 		int timeElapsed = 0; //time elapsed reset to 0
 		msTicks++; //increase msTicks (acts like a stopwatch)
@@ -142,7 +103,7 @@ void SysTick_Handler(void){
 			pushValue = 8*4; //push 8 registers bc of tail chain condition
 			osYield(); //force osYield
 		}
-	}
+	//}
 }
 
 //sleep function
@@ -153,6 +114,56 @@ void osSleep(int time){
 	threadList[osCurrentTask].napStart = msTicks; //set napt start var to current msTicks value
 	
 	osYield();//yield to next task
+}
+
+//function used to get the value of the system call's immediate
+void SVC_Handler_Main(uint32_t *svc_args){
+	char call = ((char*)svc_args[6])[-2];
+	//mutex = false; //sets mutex to false to ensure that systick cannot do anything while yield occurs
+	if (call == YIELD_SWITCH){
+		if(osCurrentTask >= 0) //checks to ensure that at least one thread exists
+		{	
+			//pushes (16 or 8) uint32_ts to move the TSP down below garbage registers
+			threadList[osCurrentTask].TSP = (uint32_t*)(__get_PSP() - pushValue); 
+			if(osCurrentTask==0) //checks if the current running task has an index of one (idleThread)
+			{
+				nextState = IDLE;//sets its nextState to idle
+			}
+			//sets the state of currentTask to its nextState for when its called again
+			threadList[osCurrentTask].state = nextState; 
+			nextState = WAITING; //defaults state back to WAITING
+			pushValue = 16*4; //defaults back to 16*4 (ie 16 registers to push)
+		}
+	
+		//increments osCurrentTask (% is to make sure it cycles through 0 to threadCount instead of going above)
+		osCurrentTask = (osCurrentTask+1)%(threadCount); 
+	
+		printf (":))"); //would not run without this ! (race case)
+	
+		//checks to ensure we do not accidentally run the sleeping thread at all OR the idlethread without them all being asleep
+		while((threadList[osCurrentTask].state==SLEEP 
+			|| threadList[osCurrentTask].state == IDLE) && allSleep == 0){ 
+			numSleepThreads++;
+			if(numSleepThreads==threadCount) //checks for condition of all threads sleeping
+			{
+				allSleep = 1; //if all sleeping, set bool value to true to exit while loop
+				numSleepThreads = 0; // refresh num of sleeping threads to 0 for next iteration
+				osCurrentTask = 0; //index of idle thread to run the idle thread
+			}
+			else
+			{
+				//defaults to continually increment/look for non-sleeping thread
+				osCurrentTask = (osCurrentTask+1)%(threadCount);
+			}
+		}
+		allSleep = 0; //resets allSleep to false for next iteration
+	
+		taskSwitched = 1; //sets taskSwitched to true to ensure that systick starts timer for this thread now
+		threadList[osCurrentTask].state = ACTIVELY_RUNNING; //sets thread that will run next to ACTIVELY_RUNNING state
+		//mutex = true; //sets mutex to true to allow systick to run
+		ICSR |= 1<<28;	//changes pendSV state to pending
+		__asm("isb");	//tells compiler to run the "isb" instruction using assembly
+	}
 }
 
 
