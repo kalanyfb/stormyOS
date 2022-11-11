@@ -10,10 +10,13 @@
 #define MAIN_STACK_SIZE 0x200
 
 //thread states
-#define IDLE 0
+#define IDLE 0 
 #define ACTIVELY_RUNNING 1 //one thread only
-#define WAITING 2
-#define SLEEP 3
+#define WAITING 2 
+#define SLEEP 3 //not ready to run
+//add ready to run state?
+
+
 #define YIELD_SWITCH 0
 
 #define LIST_LENGTH 8
@@ -28,6 +31,11 @@ typedef struct thread{
 	int state;
 	int napLength;
 	int napStart;
+	
+	bool periodic;
+	
+	//uint32_t period;
+	//uint32_t periodCountDown;
 }thread; 
 
 

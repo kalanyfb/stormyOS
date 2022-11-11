@@ -14,7 +14,7 @@ uint32_t* getNewThreadStack(uint32_t offset);
 void setThreadingWithPSP(uint32_t* threadStack); 
 
 //creates thread and puts it in array, inits stack values
-void osCreateThread(void(*userFunction)(void *args)); 
+void osCreateThread(void(*userFunction)(void *args), int freq); 
 
 //idle task function
 void osIdleTask(void* args); 

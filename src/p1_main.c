@@ -21,7 +21,8 @@ void threadOne (void *args){
 	{
 		printf("\n thread 1************************************************* ");
 		osYield();
-		//osSleep(20);
+		
+		osSleep(20);
 	}
 }
 
@@ -67,9 +68,10 @@ int main( void )
 	SysTick_Config(SystemCoreClock/1000); //calls systick_handler every ms
 	
 	//initialize threads with functions at top of file
-	osCreateThread(threadOne);
-	osCreateThread(threadTwo);
-	osCreateThread(threadThree);
+	osCreateThread(threadOne,10);
+	osCreateThread(threadTwo,0);
+	osCreateThread(threadThree,0);
+	//osMakePeriodic (threadOne);
 	
 	//start kernel
 	osKernelStart();
