@@ -18,6 +18,7 @@ uint32_t timeInThread = 0; //the exact moment (msticks value) when task has swit
 //
 int pushValue = 8*4; //default value to push if not forced to context switch by timer
 int nextState = WAITING; //default state after running (if not being sent to sleep)
+int printCount = 0;
 
 //running in sleep state variables/for checks
 int numSleepThreads = 0; //value to see if all threads are asleep and therefore idlethread has to run
@@ -25,9 +26,10 @@ bool allSleep = 0; //if numSleepThreads == number of threads (idle is treated si
 
 //mutex
 //bool mutex;
+int indexEDF = 0;
 
 //functions from __threadsCore.c that will be used in __kernelCore.c
-extern void osCreateThread(void(*userFunction)(void *args)); 
+extern void osCreateThread(void(*userFunction)(void *args), double freq); 
 extern void osIdleTask(void* args);
 
 //this function initializes memory structs and interrupts required to run kernel
@@ -39,7 +41,7 @@ void kernelInit(void){
 	
 	mspAddr = *MSP_Original; //get address of original MSP
 	
-	osCreateThread(osIdleTask); //idleTask is created in kernelInit so that RTOS users cannot access the idle task
+	osCreateThread(osIdleTask,0); //idleTask is created in kernelInit so that RTOS users cannot access the idle task
 	threadList[0].state = IDLE; //sets state of idle task to the special IDLE state
 }
 
@@ -72,6 +74,7 @@ int task_switch(void){
 
 void SysTick_Handler(void){
 		int i = 0; //count variable initialized
+		
 		//int timeElapsed = 0; //time elapsed reset to 0
 		
 		//priority increases based on closeness to deadline (periodCountdown value)
@@ -80,7 +83,10 @@ void SysTick_Handler(void){
 		//SLEEP STATE checking
 		for (i=0; i<threadCount; i++) //for loop to iterate and check all threads for sleep condition
 		{
-			threadList[i].napStart--;
+			if (threadList[i].napLength!=0)
+			{
+				threadList[i].napStart--;
+			}
 			//checks if a thread's state is sleep AND if its naptime is over (wakeup)
 			if(threadList[i].state == SLEEP && threadList[i].napStart<=0)
 			{
@@ -88,11 +94,33 @@ void SysTick_Handler(void){
 				threadList[i].napStart=0; //reset napSTART
 			}
 		}
+		printCount ++;
+		
+		
+		if (printCount % 20 == 0)
+		{
+			//printf("\nEDF: ");
+			//printf("%d", indexEDF);
+			printf ("\nthread1: periodic, state ");
+			printf("%d", threadList[1].state);
+			printf ("timer: ");
+			printf ("%d\n", threadList[1].napStart);
+			
+			printf ("thread2: periodic, state ");
+			printf("%d", threadList[2].state);
+			printf ("timer: ");
+			printf ("%d\n", threadList[2].napStart);
+			
+		}
 		
 		//FORCED CONTEXT SWITCHING
 		timeInThread --;
 		
-		if(timeInThread<=0)
+		//call osched and determine if there is a sooner deadline, if so, force a context switch 
+		
+		osGetEDF();
+		
+		if(timeInThread<=0) //|| (osCurrentTask != indexEDF && indexEDF!= -1))
 		{
 			printf("helloooooooooooooooooooooooooooooooooo");
 			pushValue = 8*4; //push 8 registers bc of tail chain condition
@@ -106,6 +134,11 @@ void SysTick_Handler(void){
 				{
 					nextState = IDLE;//sets its nextState to idle
 				}
+				if(threadList[osCurrentTask].periodic==true)
+				{
+					nextState = SLEEP;
+					threadList[osCurrentTask].napStart = threadList[osCurrentTask].napLength;
+			  }
 				//sets the state of currentTask to its nextState for when its called again
 				threadList[osCurrentTask].state = nextState; 
 				nextState = WAITING; //defaults state back to WAITING
@@ -113,6 +146,14 @@ void SysTick_Handler(void){
 			}
 	
 			osSched();
+			
+			/*
+			//picked next task already, want to start deadline timer ONLY for periodic tasks 
+			if(threadList[osCurrentTask].periodic == true)
+			{
+				//start waiting timer (same var name as the sleep timer in our struct)
+				threadList[osCurrentTask].napStart =  threadList[osCurrentTask].napLength;
+			}*/
 			
 			timeInThread = FORCE_SWITCH_TIME;
 			//taskSwitched = 1; //sets taskSwitched to true to ensure that systick starts timer for this thread now
@@ -125,33 +166,56 @@ void SysTick_Handler(void){
 	
 }
 
-void osSched(void){
+int osGetEDF(void)
+{
+	int count;
+	int soonestDeadline = 100000;
+	indexEDF = -1;
 	
-	//store deadline timeleft and index then run next in EDF scheduler
-	
-	//increments osCurrentTask (% is to make sure it cycles through 0 to threadCount instead of going above)
-	osCurrentTask = (osCurrentTask+1)%(threadCount); 
-	
-	printf (":))"); //would not run without this ! (race case)
-	
-	//checks to ensure we do not accidentally run the sleeping thread at all OR the idlethread without them all being asleep
-	while((threadList[osCurrentTask].state==SLEEP 
-		|| threadList[osCurrentTask].state == IDLE) && allSleep == 0){ 
-		numSleepThreads++;
-		if(numSleepThreads==threadCount) //checks for condition of all threads sleeping
+	for(count=0; count<threadCount; count++)
+	{
+		if(threadList[count].napStart < soonestDeadline && threadList[count].periodic==true 
+			&& threadList[count].state!= SLEEP && threadList[count].state!= IDLE)
 		{
-			allSleep = 1; //if all sleeping, set bool value to true to exit while loop
-			numSleepThreads = 0; // refresh num of sleeping threads to 0 for next iteration
-			osCurrentTask = 0; //index of idle thread to run the idle thread
-		}
-		else
-		{
-			//defaults to continually increment/look for non-sleeping thread
-			osCurrentTask = (osCurrentTask+1)%(threadCount);
+			indexEDF = count;
+			soonestDeadline =threadList[count].napStart;
+			//printf("\nEDF: ");
+		  //printf("%d", indexEDF);
 		}
 	}
-	allSleep = 0; //resets allSleep to false for next iteration
+	return indexEDF;
+}
 
+void osSched(void){
+	int indexEDF = osGetEDF();
+	if(indexEDF!=-1)
+	{
+		osCurrentTask=indexEDF;
+	}
+	else{
+		//increments osCurrentTask (% is to make sure it cycles through 0 to threadCount instead of going above)
+		osCurrentTask = (osCurrentTask+1)%(threadCount); 
+	
+		printf (":))"); //would not run without this ! (race case)
+	
+		//checks to ensure we do not accidentally run the sleeping thread at all OR the idlethread without them all being asleep
+		while((threadList[osCurrentTask].state==SLEEP 
+			|| threadList[osCurrentTask].state == IDLE) && allSleep == 0){ 
+			numSleepThreads++;
+			if(numSleepThreads==threadCount) //checks for condition of all threads sleeping
+			{
+				allSleep = 1; //if all sleeping, set bool value to true to exit while loop
+				numSleepThreads = 0; // refresh num of sleeping threads to 0 for next iteration
+				osCurrentTask = 0; //index of idle thread to run the idle thread
+			}
+			else
+			{
+				//defaults to continually increment/look for non-sleeping thread
+				osCurrentTask = (osCurrentTask+1)%(threadCount);
+			}
+		}
+		allSleep = 0; //resets allSleep to false for next iteration
+	}
 }
 
 //sleep function
@@ -175,15 +239,28 @@ void SVC_Handler_Main(uint32_t *svc_args){
 			{
 				nextState = IDLE;//sets its nextState to idle
 			}
+			
+			
+			if(threadList[osCurrentTask].periodic==true)
+			{
+				nextState = SLEEP;
+				threadList[osCurrentTask].napStart = threadList[osCurrentTask].napLength;
+			}
 			//sets the state of currentTask to its nextState for when its called again
 			threadList[osCurrentTask].state = nextState; 
-			//set periodic threads counter to napLength again 
 			
 			nextState = WAITING; //defaults state back to WAITING
 			pushValue = 8*4; //defaults back to 16*4 (ie 16 registers to push)
 		}
 		
 		osSched();
+		/*
+		//picked next task already, want to start deadline timer ONLY for periodic tasks 
+		if(threadList[osCurrentTask].periodic == true)
+		{
+			//start waiting timer (same var name as the sleep timer in our struct)
+			threadList[osCurrentTask].napStart =  threadList[osCurrentTask].napLength;
+		}*/
 		
 		timeInThread=FORCE_SWITCH_TIME;
 		//taskSwitched = 1; //sets taskSwitched to true to ensure that systick starts timer for this thread now

@@ -29,7 +29,7 @@ typedef struct thread{
 	void (*fun_ptr)(void *args); //takes in a single void pointer
 	uint32_t *TSP; //thread stack pointer address of stack
 	int state;
-	int napLength;
+	double napLength;
 	int napStart;
 	
 	bool periodic;

@@ -51,7 +51,7 @@ void setThreadingWithPSP(uint32_t* threadStack){
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void osCreateThread(void(*userFunction)(void *args), int freq){
+void osCreateThread(void(*userFunction)(void *args), double freq){
 	//pass in function pointer 
 	//create new thread stack 
 	
@@ -60,8 +60,16 @@ void osCreateThread(void(*userFunction)(void *args), int freq){
 	
 	if (threadCount<MAXTHREADS)
 	{
-		threadList[threadCount].periodic = true;
-		threadList[threadCount].napLength = 1/freq;
+		if (freq!=0)
+		{
+			threadList[threadCount].periodic = true;
+			threadList[threadCount].napLength = 1/freq;
+		}
+		else
+		{
+			threadList[threadCount].periodic = false;
+			threadList[threadCount].napLength = 0;
+		}
 		threadList[threadCount].fun_ptr = userFunction;
 		threadList[threadCount].TSP=getNewThreadStack(MAIN_STACK_SIZE + (threadCount)*THREAD_STACK_SIZE); 
 		threadList[threadCount].state = WAITING;
