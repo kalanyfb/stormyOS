@@ -19,19 +19,18 @@ uint32_t MAXTHREADS=8;
 void threadOne (void *args){
 	while(1)
 	{
-		printf("\n thread 1************************************************* ");
-		osYield();
-		
-		//osSleep(20);
+		printf("\n thread1************");
+		//osYield();
+		osSleep(70);
 	}
 }
 
 void threadTwo (void *args){
 	while(1)
 	{
-		printf("\n thread 2_________________________________________________ ");
-		//osSleep(700);
-		osYield();
+		printf("\n thread2____________");
+		osSleep(8);
+		//osYield();
 	}
 }
 
@@ -39,7 +38,15 @@ void threadThree (void *args){
 	while(1)
 	{
 		printf("\n thread 3                     &&&&                    &&&&       ");
-		
+	}
+}
+
+void threadFour (void *args){
+	while(1)
+	{
+		printf("\n thread4++++++++++++ ");
+		//osSleep(700);
+		osYield();
 	}
 }
 
@@ -65,19 +72,18 @@ int main( void )
 	//initialize kernel settings/vars
 	kernelInit();
 	
-	SysTick_Config(SystemCoreClock/1000); //calls systick_handler every ms
-	
 	//initialize threads with functions at top of file
-	osCreateThread(threadOne,0.002);
-	osCreateThread(threadTwo,0.003);
-	osCreateThread(threadThree,0);
-	//osMakePeriodic (threadOne);
+	//test case set 1
+	osCreateThread(threadOne,256); //function threadOne with freq of 256
+	osCreateThread(threadTwo,100); //function threadTwo with freq of 100
+	osCreateThread(threadFour,12); //function threadFour with freq of 12
+	
+	//moved systick_config so that the handler wouldn't be called before ready
+	SysTick_Config(SystemCoreClock/1000); //calls systick_handler every ms
 	
 	//start kernel
 	osKernelStart();
-	
-	
-	
+
 	while (1);
 }
 

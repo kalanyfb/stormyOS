@@ -22,20 +22,16 @@
 #define LIST_LENGTH 8
 #define FORCE_SWITCH_TIME 100
 
-//bool kernelStarted = 0;
 
 typedef struct thread{
 	//function pointer
 	void (*fun_ptr)(void *args); //takes in a single void pointer
 	uint32_t *TSP; //thread stack pointer address of stack
-	int state;
-	double napLength;
-	int napStart;
-	
+	int state; //current state of thread - defined under //thread states
+	double timerLength; //value given for sleep/period 
+	int napDLTimer; //nap and deadline timer
 	bool periodic;
 	
-	//uint32_t period;
-	//uint32_t periodCountDown;
 }thread; 
 
 
