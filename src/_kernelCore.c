@@ -71,73 +71,73 @@ int task_switch(void){
 }
 
 void SysTick_Handler(void){
-		int i = 0; //count variable initialized
+	int i = 0; //count variable initialized
 		
-		//SLEEP STATE checking
-		for (i=0; i<threadCount; i++) //for loop to iterate and check all threads for sleep condition
+	//SLEEP STATE checking
+	for (i=0; i<threadCount; i++) //for loop to iterate and check all threads for sleep condition
+	{
+		//a check to ensure that a non-sleep && aperiodic thread does not try to decrement its unused napDLTimer value & overflow
+		if (threadList[i].timerLength!=0) 
 		{
-			//a check to ensure that a non-sleep && aperiodic thread does not try to decrement its unused napDLTimer value & overflow
-			if (threadList[i].timerLength!=0) 
+			threadList[i].napDLTimer--; //decrement timers for all threads that are sleeping &&
+		}
+		//checks if a thread's state is sleep AND if its naptime is over (wakeup)
+		if(threadList[i].state == SLEEP && threadList[i].napDLTimer<=0)
+		{
+			threadList[i].state = WAITING; //set state to WAITING so that it is ready to be called 
+			//if periodic, we also want to start its deadline timer for our EDF scheduling
+			if(threadList[osCurrentTask].periodic == true)  
 			{
-				threadList[i].napDLTimer--; //decrement timers for all threads that are sleeping &&
+				//start waiting timer (same var name as the sleep timer in our struct)
+				//set deadline timer to period length
+				threadList[osCurrentTask].napDLTimer =  threadList[osCurrentTask].timerLength; 
 			}
-			//checks if a thread's state is sleep AND if its naptime is over (wakeup)
-			if(threadList[i].state == SLEEP && threadList[i].napDLTimer<=0)
-			{
-				threadList[i].state = WAITING; //set state to WAITING so that it is ready to be called 
-				//if periodic, we also want to start its deadline timer for our EDF scheduling
-				if(threadList[osCurrentTask].periodic == true)  
-				{
-					//start waiting timer (same var name as the sleep timer in our struct)
-					//set deadline timer to period length
-					threadList[osCurrentTask].napDLTimer =  threadList[osCurrentTask].timerLength; 
-				}
-				else{
-					threadList[i].napDLTimer=0; //reset napDLTimer (this is for sleeping threads)
-				}
+			else{
+				threadList[i].napDLTimer=0; //reset napDLTimer (this is for sleeping threads)
 			}
 		}
+	}
 		
-		//FORCED CONTEXT SWITCHING based on running out of time for a thread to run
-		timeInThread --;
+	//FORCED CONTEXT SWITCHING based on running out of time for a thread to run
+	timeInThread --;
 		
-		//call osGetEDF and determine if there is a sooner deadline, if so, force a context switch 
-		osGetEDF();
+	//call osGetEDF and determine if there is a sooner deadline, if so, force a context switch 
+	osGetEDF();
 		
-		//checks if the time for a task to run is over OR the index of the newest deadline is different from the current thread running 
-		if(timeInThread<=0 || (osCurrentTask != indexEDF && indexEDF!= -1)) 
-		{
-			pushValue = 8*4; //push 8 registers bc of tail chain condition
+	//checks if the time for a task to run is over OR the index of the newest deadline is different from the current thread running 
+	if(timeInThread<=0 || (osCurrentTask != indexEDF && indexEDF!= -1)) 
+	{
+		pushValue = 8*4; //push 8 registers bc of tail chain condition
 			
-			if(osCurrentTask >= 0) //checks to ensure that at least one thread exists
-			{	
-				//pushes (16 or 8) uint32_ts to move the TSP down below garbage registers
-				threadList[osCurrentTask].TSP = (uint32_t*)(__get_PSP() - pushValue); 
-				if(osCurrentTask==0) //checks if the current running task has an index of one (idleThread)
-				{
-					nextState = IDLE;//sets its nextState to idle
-				}
-				if(threadList[osCurrentTask].periodic==true) //for periodic threads, should sleep next
-				{
-					nextState = SLEEP;  //sets next state to sleep
-					threadList[osCurrentTask].napDLTimer = threadList[osCurrentTask].timerLength; 
-					//resets nap timer to given period length
-			  }
-				//sets the state of currentTask to its nextState for when its called again
-				threadList[osCurrentTask].state = nextState; //sets state of the currenttask 
-				nextState = WAITING; //defaults state back to WAITING
-				pushValue = 8*4; //defaults back to 16*4 (ie 16 registers to push)
+		if(osCurrentTask >= 0) //checks to ensure that at least one thread exists
+		{	
+			//pushes (16 or 8) uint32_ts to move the TSP down below garbage registers
+			threadList[osCurrentTask].TSP = (uint32_t*)(__get_PSP() - pushValue); 
+			if(osCurrentTask==0) //checks if the current running task has an index of one (idleThread)
+			{
+				nextState = IDLE;//sets its nextState to idle
 			}
+			if(threadList[osCurrentTask].periodic==true) //for periodic threads, should sleep next
+			{
+				nextState = SLEEP;  //sets next state to sleep
+				threadList[osCurrentTask].napDLTimer = threadList[osCurrentTask].timerLength; 
+				//resets nap timer to given period length
+		}
+			//sets the state of currentTask to its nextState for when its called again
+			threadList[osCurrentTask].state = nextState; //sets state of the currenttask 
+			nextState = WAITING; //defaults state back to WAITING
+			pushValue = 8*4; //defaults back to 16*4 (ie 16 registers to push)
+		}
 	
-			osSched(); //calls EDF scheduler 
+		osSched(); //calls EDF scheduler 
 			
-			timeInThread = FORCE_SWITCH_TIME; //resets timer for forced context switching to constant FORCE_SWITCH_TIME
-			threadList[osCurrentTask].state = ACTIVELY_RUNNING; //sets thread that will run next to ACTIVELY_RUNNING state
+		timeInThread = FORCE_SWITCH_TIME; //resets timer for forced context switching to constant FORCE_SWITCH_TIME
+		threadList[osCurrentTask].state = ACTIVELY_RUNNING; //sets thread that will run next to ACTIVELY_RUNNING state
 		
-			ICSR |= 1<<28;	//changes pendSV state to pending
-			__asm("isb");	//tells compiler to run the "isb" instruction using assembly
+		ICSR |= 1<<28;	//changes pendSV state to pending
+		__asm("isb");	//tells compiler to run the "isb" instruction using assembly
 			
-		}
+	}
 }
 
 int osGetEDF(void)
