@@ -9,8 +9,8 @@
 
 //#include "osDefs.h"
 
-void kernelInit(void);		//initializes memory structures and interrupts necessary to run the kernel
-void osYield(void);		//called by the kernel to schedule which threads to run
+void kernelInit(void); //initializes memory structures and interrupts necessary to run the kernel
+void osYield(void); //called by the kernel to schedule which threads to run
 bool osKernelStart(void);
 void SysTick_Handler(void); 
 void osSleep(int time); //sleep function for starting sleep timer and setting state to sleep
