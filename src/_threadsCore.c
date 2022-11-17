@@ -64,7 +64,8 @@ void osCreateThread(void(*userFunction)(void *args), double freq){
 		if (freq!=0) //checks to see if freq value has been set
 		{
 			threadList[threadCount].periodic = true; //if freq value is set to a non-zero number then it is periodic
-			threadList[threadCount].timerLength = (1/freq)*1000; //freq is converted to period and the timerlength for this thread is set to the period
+			//freq is converted to period and the timerlength for this thread is set to the period
+			threadList[threadCount].timerLength = (1/freq)*1000; 
 		}
 		else
 		{
