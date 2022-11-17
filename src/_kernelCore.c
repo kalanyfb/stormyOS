@@ -76,7 +76,8 @@ void SysTick_Handler(void){
 		//SLEEP STATE checking
 		for (i=0; i<threadCount; i++) //for loop to iterate and check all threads for sleep condition
 		{
-			if (threadList[i].timerLength!=0) //a check to ensure that a non-sleep && aperiodic thread does not try to decrement its unused napDLTimer value & overflow
+			//a check to ensure that a non-sleep && aperiodic thread does not try to decrement its unused napDLTimer value & overflow
+			if (threadList[i].timerLength!=0) 
 			{
 				threadList[i].napDLTimer--; //decrement timers for all threads that are sleeping &&
 			}
@@ -84,10 +85,12 @@ void SysTick_Handler(void){
 			if(threadList[i].state == SLEEP && threadList[i].napDLTimer<=0)
 			{
 				threadList[i].state = WAITING; //set state to WAITING so that it is ready to be called 
-				if(threadList[osCurrentTask].periodic == true)  //if periodic, we also want to start its deadline timer for our EDF scheduling
+				//if periodic, we also want to start its deadline timer for our EDF scheduling
+				if(threadList[osCurrentTask].periodic == true)  
 				{
 					//start waiting timer (same var name as the sleep timer in our struct)
-					threadList[osCurrentTask].napDLTimer =  threadList[osCurrentTask].timerLength; //set deadline timer to period length
+					//set deadline timer to period length
+					threadList[osCurrentTask].napDLTimer =  threadList[osCurrentTask].timerLength; 
 				}
 				else{
 					threadList[i].napDLTimer=0; //reset napDLTimer (this is for sleeping threads)
@@ -101,7 +104,8 @@ void SysTick_Handler(void){
 		//call osGetEDF and determine if there is a sooner deadline, if so, force a context switch 
 		osGetEDF();
 		
-		if(timeInThread<=0 || (osCurrentTask != indexEDF && indexEDF!= -1)) //checks if the time for a task to run is over OR the index of the newest deadline is different from the current thread running 
+		//checks if the time for a task to run is over OR the index of the newest deadline is different from the current thread running 
+		if(timeInThread<=0 || (osCurrentTask != indexEDF && indexEDF!= -1)) 
 		{
 			pushValue = 8*4; //push 8 registers bc of tail chain condition
 			
@@ -116,7 +120,8 @@ void SysTick_Handler(void){
 				if(threadList[osCurrentTask].periodic==true) //for periodic threads, should sleep next
 				{
 					nextState = SLEEP;  //sets next state to sleep
-					threadList[osCurrentTask].napDLTimer = threadList[osCurrentTask].timerLength; //resets nap timer to given period length
+					threadList[osCurrentTask].napDLTimer = threadList[osCurrentTask].timerLength; 
+					//resets nap timer to given period length
 			  }
 				//sets the state of currentTask to its nextState for when its called again
 				threadList[osCurrentTask].state = nextState; //sets state of the currenttask 
@@ -143,11 +148,13 @@ int osGetEDF(void)
 	
 	for(count=0; count<threadCount; count++) //goes through entire threadlist
 	{
+		//checks if there is a sooner deadline from a periodic thread that is not sleeping or idle
 		if(threadList[count].napDLTimer < soonestDeadline && threadList[count].periodic==true 
-			&& threadList[count].state!= SLEEP && threadList[count].state!= IDLE) //checks if there is a sooner deadline from a periodic thread that is not sleeping or idle
+			&& threadList[count].state!= SLEEP && threadList[count].state!= IDLE) 
 		{
 			indexEDF = count; //sets the index to the current thread that was just checked
-			soonestDeadline = threadList[count].napDLTimer; //sets the soonest deadline to the value of the timer for the same thread
+			//sets the soonest deadline to the value of the timer for the same thread
+			soonestDeadline = threadList[count].napDLTimer; 
 		}
 	}
 	return indexEDF; //returns the index of the earliest deadline thread
@@ -211,7 +218,8 @@ void SVC_Handler_Main(uint32_t *svc_args){
 			if(threadList[osCurrentTask].periodic==true) //for periodic threads, should sleep next
 			{
 				nextState = SLEEP; //sets next state to sleep
-				threadList[osCurrentTask].napDLTimer = threadList[osCurrentTask].timerLength; // resets nap timer to given period length
+				// resets nap timer to given period length
+				threadList[osCurrentTask].napDLTimer = threadList[osCurrentTask].timerLength; 
 			}
 			//sets the state of currentTask to its nextState for when its called again
 			threadList[osCurrentTask].state = nextState; //sets state of the current task
