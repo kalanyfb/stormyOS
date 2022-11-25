@@ -1,0 +1,144 @@
+
+
+
+ARM Macro Assembler    Page 1 
+
+
+    1 00000000                 AREA             handle_pend,CODE,READONLY ;defi
+                                                            nes new "area"- way
+                                                             for linker to know
+                                                             what exists in thi
+                                                            s file (code that s
+                                                            houldn't be overwri
+                                                            tten)
+    2 00000000                 EXTERN           task_switch ;calls a C function
+                                                             to handle the swit
+                                                            ching
+    3 00000000                 GLOBAL           PendSV_Handler 
+                                                            ;declares function
+    4 00000000                 GLOBAL           SVC_Handler ;declares new funct
+                                                            ion 
+    5 00000000                 PRESERVE8                    ;tells linker that 
+                                                            stack will always l
+                                                            ie on 8 byte bounda
+                                                            ry
+    6 00000000         PendSV_Handler
+    7 00000000         
+    8 00000000 F3EF 8009       MRS              r0, PSP     ;loads curr val of 
+                                                            PSP into r0
+    9 00000004         
+   10 00000004 E920 0FF0       STMDB            r0!,{r4-r11} ;stores the regist
+                                                            ers
+   11 00000008         
+   12 00000008 F7FF FFFE       BL               task_switch ;calls kernel to sw
+                                                            itch task
+   13 0000000C         
+   14 0000000C F3EF 8009       MRS              r0,PSP      ;new task stack
+   15 00000010 F06F 0E02       MOV              LR,#0xFFFFFFFD ;loads LR with c
+                                                            onstant val
+   16 00000014         
+   17 00000014 E8B0 0FF0       LDMIA            r0!,{r4-r11} ; opposite of STMD
+                                                            B, means LoaD Multi
+                                                            ple Increment After
+                                                             - basically undos 
+                                                            the stack pushes do
+                                                            ne prior
+   18 00000018         
+   19 00000018 F380 8809       MSR              PSP,r0      ; reload PSP
+   20 0000001C         
+   21 0000001C 4770            BX               LR          ;returns from funct
+                                                            ion
+   22 0000001E         ;END
+   23 0000001E         
+   24 0000001E         SVC_Handler
+   25 0000001E                 EXTERN           SVC_Handler_Main ;defines exter
+                                                            nal function called
+                                                             SVC_Handler_Main
+   26 0000001E         
+   27 0000001E         ;tests the value stored in LR
+   28 0000001E         ;tells chip whether it was called from thread/handler mo
+                       de & whether PSP/MSP was used
+   29 0000001E F01E 0F04       TST              LR,#4
+   30 00000022         
+   31 00000022 BF0C            ITE              EQ          ;an if-then-else co
+                                                            nstruct that will l
+                                                            oad r0 depending on
+
+
+
+ARM Macro Assembler    Page 2 
+
+
+                                                             test result
+   32 00000024         
+   33 00000024 F3EF 8008       MRSEQ            r0, MSP     ;loads r0 with MSP 
+                                                            depending on the te
+                                                            st result
+   34 00000028 F3EF 8009       MRSNE            r0, PSP     ;loads r0 with PSP 
+                                                            depending on the te
+                                                            st result
+   35 0000002C         
+   36 0000002C F7FF BFFE       B                SVC_Handler_Main
+   37 00000030                 END
+Command Line: --debug --xref --diag_suppress=9931 --cpu=Cortex-M3 --apcs=interw
+ork --depend=.\objects\svc_calls.d -o.\objects\svc_calls.o -I.\RTE\Device\LPC17
+68 -I.\RTE\_Target_1 -IC:\Software\Keil_v5\ARM\PACK\ARM\CMSIS\5.8.0\CMSIS\Core\
+Include -IC:\Software\Keil_v5\ARM\PACK\Keil\LPC1700_DFP\2.7.0\Device\Include --
+predefine="__EVAL SETA 1" --predefine="__MICROLIB SETA 1" --predefine="__UVISIO
+N_VERSION SETA 531" --predefine="_RTE_ SETA 1" --predefine="LPC175x_6x SETA 1" 
+--predefine="_RTE_ SETA 1" --list=.\listings\svc_calls.lst src\svc_calls.s
+
+
+
+ARM Macro Assembler    Page 1 Alphabetic symbol ordering
+Relocatable symbols
+
+PendSV_Handler 00000000
+
+Symbol: PendSV_Handler
+   Definitions
+      At line 6 in file src\svc_calls.s
+   Uses
+      At line 3 in file src\svc_calls.s
+Comment: PendSV_Handler used once
+SVC_Handler 0000001E
+
+Symbol: SVC_Handler
+   Definitions
+      At line 24 in file src\svc_calls.s
+   Uses
+      At line 4 in file src\svc_calls.s
+Comment: SVC_Handler used once
+handle_pend 00000000
+
+Symbol: handle_pend
+   Definitions
+      At line 1 in file src\svc_calls.s
+   Uses
+      None
+Comment: handle_pend unused
+3 symbols
+
+
+
+ARM Macro Assembler    Page 1 Alphabetic symbol ordering
+External symbols
+
+SVC_Handler_Main 00000000
+
+Symbol: SVC_Handler_Main
+   Definitions
+      At line 25 in file src\svc_calls.s
+   Uses
+      At line 36 in file src\svc_calls.s
+Comment: SVC_Handler_Main used once
+task_switch 00000000
+
+Symbol: task_switch
+   Definitions
+      At line 2 in file src\svc_calls.s
+   Uses
+      At line 12 in file src\svc_calls.s
+Comment: task_switch used once
+2 symbols
+340 symbols in table
