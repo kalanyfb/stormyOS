@@ -72,7 +72,8 @@ void SysTick_Handler(void){
 		//SLEEP STATE checking
 		for (i=0; i<threadCount; i++) //for loop to iterate and check all threads for sleep condition
 		{
-			if (threadList[i].timerLength!=0) //a check to ensure that a non-sleep && aperiodic thread does not try to decrement its unused napDLTimer value & overflow
+			//a check to ensure that a non-sleep && aperiodic thread does not try to decrement its unused napDLTimer value & overflow
+			if (threadList[i].timerLength!=0) 
 			{
 				threadList[i].napTimer--; //decrement timers for all threads that are sleeping &&
 			}
