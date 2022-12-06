@@ -22,11 +22,16 @@ uint32_t MAXTHREADS=8;
 void threadOne (void *args){
 	bool run1=0;
 	run1=osMutexAcquire(0);
+	printf("\n acquired: ");
+	printf("%d", run1);
 	if(run1 == true)
 	{
+		printf("\n acquired: ");
+		printf("%d", run1);
 		while(1)
 		{
 			printf("\n thread 1************************************************* ");
+			printf("released: ");
 			printf("%d\n", osMutexRelease(0));
 			osYield();
 		}
@@ -40,12 +45,14 @@ void threadOne (void *args){
 void threadTwo (void *args){
 	bool run2=0;
 	run2=osMutexAcquire(0);
+	printf("\n acquired: ");
+	printf("%d", run2);
 	if(run2 == true)
 	{
 		while(1)
 		{
 			printf("\n thread 2_________________________________________________ ");
-			printf("!!!!!");
+			printf("released: ");
 			printf("%d\n", osMutexRelease(0));
 			osYield();
 		}
@@ -59,11 +66,14 @@ void threadTwo (void *args){
 void threadThree (void *args){
 	bool run3=0;
 	run3=osMutexAcquire(0);
+	printf("\n acquired: ");
+	printf("%d", run3);
 	if(run3 == true)
 	{
 		while(1)
 		{
-			printf("\n thread 2_________________________________________________ ");
+			printf("\n thread 3 ++++++++++++++++++++++++++++++++++++++++++++++ ");
+			printf("released: ");
 			printf("%d\n", osMutexRelease(0));
 			osYield();
 		}
@@ -112,6 +122,7 @@ int main( void )
 	
 	printf("\n index of mutex 1: ");
 	printf("%d", indexMutexOne);
+	
 	//start kernel
 	osKernelStart();
 	
