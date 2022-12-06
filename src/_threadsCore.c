@@ -37,7 +37,6 @@ uint32_t* getNewThreadStack(uint32_t OFFSET){
 	PSPAddress += addOffset; //additional offset is added to PSP address to make it divisible by 8
 	newPSP = (uint32_t*)(PSPAddress); // newPSP is set with address that is (correctly) offset
 	
-	//print PSP address to check
 	printf ("PSP address:");
 	printf ("%x\n", PSPAddress);
 	return newPSP;
@@ -52,7 +51,7 @@ void setThreadingWithPSP(uint32_t* threadStack){
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void osCreateThread(void(*userFunction)(void *args), double freq){
+int osCreateThread(void(*userFunction)(void *args)){
 	//pass in function pointer 
 	//create new thread stack 
 	
@@ -61,53 +60,39 @@ void osCreateThread(void(*userFunction)(void *args), double freq){
 	
 	if (threadCount<MAXTHREADS)
 	{
-		if (freq!=0) //checks to see if freq value has been set
-		{
-			threadList[threadCount].periodic = true; //if freq value is set to a non-zero number then it is periodic
-			//freq is converted to period and the timerlength for this thread is set to the period
-			threadList[threadCount].timerLength = (1/freq)*1000; 
-		}
-		else
-		{
-			threadList[threadCount].periodic = false; //if freq value was set to 0 (ie not set), then it is not periodic
-			threadList[threadCount].timerLength = 0; //timer value initialized to 0 and not used
-		}
-		threadList[threadCount].fun_ptr = userFunction; //sets function pointer to user function pointer
-		threadList[threadCount].TSP=getNewThreadStack(MAIN_STACK_SIZE + (threadCount)*THREAD_STACK_SIZE); //set new thread stack pointer
-		threadList[threadCount].state = WAITING; //set current state of newly created thread to waiting
+		threadList[threadCount].fun_ptr = userFunction;
+		threadList[threadCount].TSP=getNewThreadStack(MAIN_STACK_SIZE + (threadCount)*THREAD_STACK_SIZE); 
+		threadList[threadCount].state = WAITING;
 		
-		//debugging/check
-		printf("%x,\n", (int)(threadList[threadCount].TSP)); //print tsp to check
+		printf("%x,\n", (int)(threadList[threadCount].TSP));
 		*(--threadList[threadCount].TSP) = 1<<24;
 		printf ("%x\n", *(threadList[threadCount].TSP));
 		*(--threadList[threadCount].TSP) = (uint32_t)userFunction;
-		//end of check statements
 		
-		patternedValue=0xA0; //set to a nice value to check in memory easily
+		patternedValue=0xA0;
 		for (i = 0; i<6; i++){
-			*(--threadList[threadCount].TSP) = patternedValue; //set memory to given values
-			patternedValue = patternedValue + 0x01; //incremement patterned value
+			*(--threadList[threadCount].TSP) = patternedValue;
+			patternedValue = patternedValue + 0x01;
 		}
 		
-		patternedValue=0xB0; //set to a nice value to check in memory easily
+		patternedValue=0xB0;
 		for (i = 0; i<8; i++){
-			*(--threadList[threadCount].TSP) = patternedValue; //set memory to given values
-			patternedValue = patternedValue + 0x01; //incremement patterned value
+			*(--threadList[threadCount].TSP) = patternedValue;
+			patternedValue = patternedValue + 0x01;
 		}
-		threadCount++; //increase threadcount as a new thread has just been created
-		printf ("%d\n", threadCount); //print threadcount to check
-		
+		threadCount++;
+		printf ("%d\n", threadCount);
 	}
+	return (threadCount-1);
 	
 }
-
 
 //should only run if no other options
 void osIdleTask(void* args){
 	while(1)
 	{	
 		//for testing- prints "idlethread" but should do nothing when actually implement
-		printf("\nidlethread");
+		printf("\n idlethread");
 		osYield();
 	}
 }

@@ -13,8 +13,8 @@ uint32_t* getNewThreadStack(uint32_t offset);
 //Sets value of PSP to threadStack & ensures microcontroller is using that value by changing CONTROL register
 void setThreadingWithPSP(uint32_t* threadStack); 
 
-//creates thread and puts it in array, inits stack values - for lab 4 added frequency as an argument for periodic threads
-void osCreateThread(void(*userFunction)(void *args), double freq); 
+//creates thread and puts it in array, inits stack values
+int osCreateThread(void(*userFunction)(void *args)); 
 
 //idle task function
 void osIdleTask(void* args); 

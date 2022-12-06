@@ -428,6 +428,21 @@
               <FileType>5</FileType>
               <FilePath>.\src\osDefs.h</FilePath>
             </File>
+            <File>
+              <FileName>_queueFunctions.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\_queueFunctions.c</FilePath>
+            </File>
+            <File>
+              <FileName>_mutexCore.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\_mutexCore.c</FilePath>
+            </File>
+            <File>
+              <FileName>_mutexCore.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\src\_mutexCore.h</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

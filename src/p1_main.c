@@ -11,48 +11,79 @@
 
 #include "_threadsCore.h"
 #include "_kernelCore.h"
+#include "_mutexCore.h"
+
+
 
 uint32_t OFFSET=512;
 uint32_t MAXTHREADS=8;
 
 
 void threadOne (void *args){
-	while(1)
+	bool run1=0;
+	run1=osMutexAcquire(0);
+	if(run1 == true)
 	{
-		printf("\n thread1******");
-		//osYield();
-		osSleep(40);
+		while(1)
+		{
+			printf("\n thread 1************************************************* ");
+			printf("%d\n", osMutexRelease(0));
+			osYield();
+		}
+	}
+	else
+	{
+		osYield();
 	}
 }
 
 void threadTwo (void *args){
-	while(1)
+	bool run2=0;
+	run2=osMutexAcquire(0);
+	if(run2 == true)
 	{
-		printf("\n thread2______");
-		osSleep(7);
-		//osYield();
+		while(1)
+		{
+			printf("\n thread 2_________________________________________________ ");
+			printf("!!!!!");
+			printf("%d\n", osMutexRelease(0));
+			osYield();
+		}
+	}
+	else
+	{
+		osYield();
 	}
 }
 
 void threadThree (void *args){
-	while(1)
+	bool run3=0;
+	run3=osMutexAcquire(0);
+	if(run3 == true)
 	{
-		printf("\n thread 3                     &&&&                    &&&&       ");
+		while(1)
+		{
+			printf("\n thread 2_________________________________________________ ");
+			printf("%d\n", osMutexRelease(0));
+			osYield();
+		}
+	}
+	else
+	{
+		osYield();
 	}
 }
 
-void threadFour (void *args){
-	while(1)
-	{
-		printf("\n thread4++++++ ");
-		osSleep(40);
-		//osYield();
-	}
-}
 
 int main( void ) 
 {
 	uint32_t* MSPPtr;
+	int indexThreadOne = 0;
+	int indexThreadTwo = 0;
+	int indexThreadThree = 0;
+	int indexMutexOne;
+	int ownThreads[8];
+	int nOwnThreads;
 	SystemInit(); 
 	
 	printf("\n hello world"); 
@@ -60,21 +91,30 @@ int main( void )
 	printf("\n MSP PTR: ");
 	printf ("%x\n", (int)&MSPPtr);
 	
+	
 	//initialize kernel settings/vars
 	kernelInit();
 	
-	//initialize threads with functions at top of file
-	//test case set 1
-	osCreateThread(threadOne,0); //function threadOne with freq of 256
-	osCreateThread(threadTwo,0); //function threadTwo with freq of 100
-	//osCreateThread(threadFour,0); //function threadFour with freq of 12
 	
-	//moved systick_config so that the handler wouldn't be called before ready
+	//initialize threads with functions at top of file
+	indexThreadOne = osCreateThread(threadOne);
+	indexThreadTwo = osCreateThread(threadTwo);
+	indexThreadThree = osCreateThread(threadThree);
+	
 	SysTick_Config(SystemCoreClock/1000); //calls systick_handler every ms
 	
+	
+	ownThreads[0] = indexThreadOne;
+	ownThreads[1] = indexThreadTwo;
+	ownThreads[2] = indexThreadThree;
+	nOwnThreads = 3;
+	indexMutexOne = osCreateMutex(nOwnThreads, ownThreads);
+	
+	printf("\n index of mutex 1: ");
+	printf("%d", indexMutexOne);
 	//start kernel
 	osKernelStart();
-
+	
 	while (1);
 }
 

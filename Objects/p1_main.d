@@ -13,3 +13,5 @@
 .\objects\p1_main.o: src\_threadsCore.h
 .\objects\p1_main.o: src\_kernelCore.h
 .\objects\p1_main.o: C:\Software\Keil_v5\ARM\ARMCC\Bin\..\include\stddef.h
+.\objects\p1_main.o: src\_mutexCore.h
+.\objects\p1_main.o: src\osDefs.h
